@@ -1,0 +1,31 @@
+requisition_id,title,department,location,status,open_date,target_fill_date,filled_date,hiring_manager,recruiter,salary_min,salary_max,applicants,urgency
+REQ-001,Data Engineer,Engineering,Remote,filled,2025-01-12,2025-02-13,2025-02-11,Kevin Nguyen,Marcus Rivera,138000,176000,25,low
+REQ-002,Business Operations Associate,Operations,London,open,2025-09-14,2025-10-31,,James Wilson,Priya Sharma,59000,100000,118,critical
+REQ-003,UX Researcher,Design,Remote,open,2025-06-24,2025-09-19,,Rachel Adams,Priya Sharma,72000,105000,53,medium
+REQ-004,Operations Analyst,Operations,New York,filled,2025-08-07,2025-09-25,2025-10-03,Nicole Scott,Tyler Brooks,54000,88000,22,high
+REQ-005,Operations Analyst,Operations,Remote,open,2025-09-26,2025-12-23,,James Wilson,Samantha Cho,139000,155000,77,critical
+REQ-006,Enterprise Account Executive,Sales,New York,closed,2025-04-05,2025-05-25,,Robert Garcia,Priya Sharma,60000,79000,117,critical
+REQ-007,Product Designer,Design,New York,on_hold,2025-05-21,2025-06-29,,Daniel Martinez,Jessica Patel,69000,93000,102,critical
+REQ-008,Financial Analyst,Finance,London,open,2025-01-14,2025-03-07,,Laura Thompson,Priya Sharma,139000,169000,69,high
+REQ-009,Growth Marketing Manager,Marketing,New York,on_hold,2025-09-09,2025-11-08,,Amanda Williams,Jennifer Hall,67000,91000,57,high
+REQ-010,Staff Engineer,Engineering,Remote,open,2025-04-14,2025-07-01,,Christopher Lee,Jessica Patel,96000,137000,83,medium
+REQ-011,Sales Development Representative,Sales,Remote,filled,2025-01-22,2025-03-31,2025-03-26,Brian Mitchell,Samantha Cho,118000,160000,81,medium
+REQ-012,Financial Analyst,Finance,New York,filled,2025-01-22,2025-04-18,2025-03-09,Andrew Davis,Priya Sharma,55000,76000,71,high
+REQ-013,UX Designer,Design,San Francisco,open,2025-06-05,2025-08-23,,Rachel Adams,Samantha Cho,70000,102000,83,critical
+REQ-014,Operations Analyst,Operations,New York,filled,2025-02-16,2025-05-03,2025-05-06,James Wilson,Jennifer Hall,132000,155000,94,medium
+REQ-015,Sales Development Representative,Sales,New York,open,2025-10-30,2026-01-25,,Robert Garcia,Samantha Cho,60000,87000,93,high
+REQ-016,Operations Analyst,Operations,Berlin,open,2025-02-28,2025-05-14,,Nicole Scott,Priya Sharma,86000,116000,95,medium
+REQ-017,Associate Product Manager,Product,London,open,2025-10-09,2025-12-02,,Emily Johnson,Jennifer Hall,100000,143000,89,critical
+REQ-018,Senior Software Engineer,Engineering,San Francisco,closed,2025-08-03,2025-09-21,,Kevin Nguyen,Priya Sharma,173000,200000,85,medium
+REQ-019,Customer Success Manager,Customer Success,San Francisco,closed,2025-01-07,2025-03-07,,Thomas Brown,Samantha Cho,98000,131000,82,critical
+REQ-020,Data Engineer,Engineering,London,filled,2025-08-15,2025-09-19,2025-10-07,Sarah Chen,Jennifer Hall,147000,182000,85,high
+REQ-021,Customer Success Manager,Customer Success,San Francisco,open,2025-06-28,2025-07-30,,Maria Rodriguez,Jessica Patel,118000,150000,82,medium
+REQ-022,Legal Counsel,Legal,San Francisco,on_hold,2025-03-24,2025-06-05,,David Kim,Tyler Brooks,125000,168000,81,high
+REQ-023,HR Generalist,Human Resources,Berlin,open,2025-01-19,2025-02-23,,Jennifer Hall,Marcus Rivera,74000,115000,109,low
+REQ-024,Enterprise Account Executive,Sales,San Francisco,filled,2025-03-04,2025-05-17,2025-04-23,Brian Mitchell,Tyler Brooks,96000,128000,94,medium
+REQ-025,Data Engineer,Engineering,Berlin,filled,2025-02-14,2025-04-15,2025-04-06,Daniel Martinez,Tyler Brooks,117000,150000,78,critical
+REQ-026,Account Executive,Sales,London,filled,2025-09-12,2025-11-12,2025-10-20,Robert Garcia,Priya Sharma,85000,108000,20,low
+REQ-027,Financial Analyst,Finance,Berlin,open,2025-08-01,2025-09-26,,Laura Thompson,Marcus Rivera,82000,124000,86,medium
+REQ-028,Accountant,Finance,San Francisco,open,2025-06-03,2025-08-04,,Andrew Davis,Jessica Patel,55000,85000,48,medium
+REQ-029,Recruiter,Human Resources,Remote,open,2025-06-23,2025-09-20,,Jennifer Hall,Samantha Cho,50000,67000,66,medium
+REQ-030,Growth Marketing Manager,Marketing,Remote,filled,2025-07-31,2025-10-28,2025-11-18,Amanda Williams,Tyler Brooks,75000,116000,91,medium

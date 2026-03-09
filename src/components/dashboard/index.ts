@@ -1,0 +1,11 @@
+export { default as DashboardGrid } from './DashboardGrid'
+export { default as WidgetPalette } from './WidgetPalette'
+export { default as WidgetWrapper } from './WidgetWrapper'
+export { default as WidgetConfig } from './WidgetConfig'
+export { default as MetricWidget } from './widgets/MetricWidget'
+export { default as ChartWidget } from './widgets/ChartWidget'
+export { default as TableWidget } from './widgets/TableWidget'
+export { default as GaugeWidget } from './widgets/GaugeWidget'
+export { default as SQLWidget } from './widgets/SQLWidget'
+
+export type { Widget, WidgetType, DashboardLayout } from './types'

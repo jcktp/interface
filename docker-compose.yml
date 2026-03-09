@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # Main application (Frontend + Backend)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/hr_analytics
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - ML_MODELS_PATH=/app/backend/models
+      - OPENAI_API_KEY=ollama
+      - LLM_BASE_URL=http://ollama:11434/v1
+      - LLM_MODEL=llama3.2:1b
+    volumes:
+      - ./data:/app/data
+      - ml-models:/app/backend/models
+    depends_on:
+      - db
+      - redis
+      - ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Lightweight LLM Server
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Pulls the model automatically on startup
+  ollama-pull:
+    image: curlimages/curl:latest
+    command: "curl -X POST http://ollama:11434/api/pull -d '{\"name\":\"llama3.2:1b\"}'"
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hr_analytics
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and task queue
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Slack Bot Service
+  slack-bot:
+    build:
+      context: ./slack-bot
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET}
+      - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
+      - BACKEND_URL=http://app:8000
+    depends_on:
+      - app
+    restart: unless-stopped
+    profiles:
+      - slack
+
+  # ML Model Training Worker (optional - for background training)
+  ml-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/hr_analytics
+      - REDIS_URL=redis://redis:6379
+      - ML_MODELS_PATH=/app/models
+    volumes:
+      - ml-models:/app/models
+      - ./data:/app/data
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    profiles:
+      - ml
+
+volumes:
+  postgres-data:
+  redis-data:
+  ml-models:
+  ollama-data:
+
+networks:
+  default:
+    name: hr-analytics-network
