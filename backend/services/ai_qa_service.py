@@ -70,10 +70,11 @@ TABLE job_requisitions
 TABLE candidates
   id UUID, organization_id UUID
   first_name VARCHAR, last_name VARCHAR, email VARCHAR
-  applied_position VARCHAR, department VARCHAR
+  applied_position VARCHAR (free-text job title — NOT a FK to job_requisitions), department VARCHAR
   application_date DATE
   status ENUM('new','screening','interview','offer','hired','rejected')
   source VARCHAR, stage VARCHAR
+  NOTE: candidates cannot be joined to job_requisitions by ID — link only via department or applied_position text match
 
 TABLE attendance_records
   id UUID, organization_id UUID, employee_id UUID (FK → employees.id)
