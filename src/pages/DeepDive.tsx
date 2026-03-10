@@ -10,6 +10,7 @@ import {
   FunnelIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline'
+import AIInsightsPanel from '../components/AIInsightsPanel'
 
 const METRICS = [
   { value: 'engagement', label: 'Engagement Score' },
@@ -28,9 +29,12 @@ export default function DeepDive() {
   const [department, setDepartment] = useState(searchParams.get('department') || '')
   const [location, setLocation] = useState(searchParams.get('location') || '')
   const [comparisonMode, setComparisonMode] = useState(false)
-  
+  const [compareDept, setCompareDept] = useState('')
+
   const [analysis, setAnalysis] = useState<any>(null)
+  const [comparisonAnalysis, setComparisonAnalysis] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [comparisonLoading, setComparisonLoading] = useState(false)
   const alertId = searchParams.get('alert_id')
 
   // Fetch options from the database
@@ -64,7 +68,7 @@ export default function DeepDive() {
       if (alertId) params.alert_id = alertId
       if (department) params.department = department
       if (location) params.location = location
-      
+
       const res = await api.get('/deep-dive/analyze', { params })
       setAnalysis(res.data)
       if (res.data.metric && res.data.metric !== metric) {
@@ -76,6 +80,29 @@ export default function DeepDive() {
       setLoading(false)
     }
   }, [metric, department, location, alertId])
+
+  const runComparisonAnalysis = useCallback(async () => {
+    if (!comparisonMode || !compareDept) return
+    setComparisonLoading(true)
+    try {
+      const params: any = { metric, department: compareDept }
+      if (location) params.location = location
+      const res = await api.get('/deep-dive/analyze', { params })
+      setComparisonAnalysis(res.data)
+    } catch (err: any) {
+      toast.error('Failed to load comparison analysis')
+    } finally {
+      setComparisonLoading(false)
+    }
+  }, [metric, compareDept, location, comparisonMode])
+
+  useEffect(() => {
+    if (comparisonMode && compareDept) {
+      runComparisonAnalysis()
+    } else {
+      setComparisonAnalysis(null)
+    }
+  }, [comparisonMode, compareDept, runComparisonAnalysis])
 
   useEffect(() => {
     runAnalysis()
@@ -99,7 +126,7 @@ export default function DeepDive() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Deep Dive Analysis</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Deep Dive</h1>
           <p className="text-sm text-gray-500 mt-1">
             {analysis?.alert_context
               ? `Investigating: ${analysis.alert_context.title}`
@@ -140,12 +167,15 @@ export default function DeepDive() {
         <div className="flex-1"></div>
 
         <div className="flex items-center gap-2 border-l border-gray-200 pl-4">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Comparison Mode:</span>
-          <button 
-            onClick={() => setComparisonMode(!comparisonMode)}
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Compare:</span>
+          <button
+            onClick={() => {
+              setComparisonMode(!comparisonMode)
+              if (comparisonMode) setComparisonAnalysis(null)
+            }}
             className={clsx(
               "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2",
-              comparisonMode ? "bg-slate-900" : "bg-gray-200"
+              comparisonMode ? "bg-blue-600" : "bg-gray-200"
             )}
           >
             <span className={clsx(
@@ -155,6 +185,30 @@ export default function DeepDive() {
           </button>
         </div>
       </div>
+
+      {/* Comparison second filter row */}
+      {comparisonMode && (
+        <div className="flex flex-wrap items-center gap-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
+          <span className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">Compare against:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Department B:</span>
+            <select
+              value={compareDept}
+              onChange={e => setCompareDept(e.target.value)}
+              className="text-sm border border-blue-200 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[160px]"
+            >
+              <option value="">— Select department —</option>
+              {departments.filter(d => d !== department).map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          {!compareDept && (
+            <span className="text-xs text-blue-500 italic">Select a second department to compare side-by-side</span>
+          )}
+          {compareDept && comparisonLoading && (
+            <span className="text-xs text-blue-600 animate-pulse">Loading comparison…</span>
+          )}
+        </div>
+      )}
 
       {analysis?.alert_context && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
@@ -170,6 +224,44 @@ export default function DeepDive() {
         </div>
       )}
 
+      <AIInsightsPanel
+        pageContext={`Deep Dive — ${METRICS.find(m => m.value === metric)?.label ?? metric}`}
+        prompt={`Provide a deep statistical analysis of the ${METRICS.find(m => m.value === metric)?.label ?? metric} metric${department ? ` for the ${department} department` : ''}. What are the most important patterns, outliers, and correlations? What should HR leadership do in response to these findings?`}
+      />
+
+      {/* Comparison summary when both analyses loaded */}
+      {comparisonMode && analysis && comparisonAnalysis && compareDept && (
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+            Comparison Summary: {department || 'All Departments'} vs {compareDept}
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: department || 'All Departments', stats: analysis.distribution_stats, color: 'blue' },
+              { label: compareDept, stats: comparisonAnalysis.distribution_stats, color: 'violet' },
+            ].map((side) => (
+              side.stats && (
+                <div key={side.label} className={clsx('p-4 rounded-xl border col-span-1 md:col-span-2', side.color === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800')}>
+                  <p className={clsx('text-xs font-bold uppercase tracking-wider mb-3', side.color === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-violet-600 dark:text-violet-400')}>{side.label}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: 'Median', value: side.stats.median },
+                      { label: 'Average', value: side.stats.mean ?? side.stats.avg },
+                      { label: 'Std Dev', value: side.stats.std_dev },
+                    ].map(stat => (
+                      <div key={stat.label} className="text-center">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{stat.value ?? '—'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            ))}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map(i => (
@@ -177,6 +269,19 @@ export default function DeepDive() {
           ))}
         </div>
       ) : analysis ? (
+        <>
+        {comparisonMode && comparisonAnalysis && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <span className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
+              <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">{department || 'All Departments'}</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg">
+              <span className="w-3 h-3 rounded-full bg-violet-500 shrink-0" />
+              <span className="text-sm font-semibold text-violet-700 dark:text-violet-300">{compareDept}</span>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
           {/* Statistical Distribution Profile */}
           {analysis.distribution_stats && Object.keys(analysis.distribution_stats).length > 0 && (
@@ -404,6 +509,73 @@ export default function DeepDive() {
             </div>
           )}
         </div>
+
+        {/* Comparison analysis pane */}
+        {comparisonMode && comparisonAnalysis && compareDept && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="lg:col-span-2 flex items-center gap-2 mt-2">
+              <span className="w-3 h-3 rounded-full bg-violet-500 shrink-0" />
+              <h3 className="text-sm font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">{compareDept} — Detailed Analysis</h3>
+            </div>
+            {comparisonAnalysis.distribution_stats && Object.keys(comparisonAnalysis.distribution_stats).length > 0 && (
+              <div className="bg-white dark:bg-gray-800 border border-violet-200 dark:border-violet-800 rounded-xl p-5 lg:col-span-2 shadow-sm border-l-4 border-l-violet-500">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Statistical Distribution Profile</h3>
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                  {[
+                    { label: 'Min', value: comparisonAnalysis.distribution_stats.min },
+                    { label: 'P25', value: comparisonAnalysis.distribution_stats.p25 },
+                    { label: 'Median', value: comparisonAnalysis.distribution_stats.median, highlight: true },
+                    { label: 'P75', value: comparisonAnalysis.distribution_stats.p75 },
+                    { label: 'Max', value: comparisonAnalysis.distribution_stats.max },
+                    { label: 'Std Dev', value: comparisonAnalysis.distribution_stats.std_dev },
+                  ].map((stat) => (
+                    <div key={stat.label} className={clsx('p-3 rounded-lg text-center', stat.highlight ? 'bg-violet-600 border border-violet-500' : 'bg-gray-50 dark:bg-gray-700/50')}>
+                      <p className={clsx('text-[10px] uppercase font-bold tracking-wider', stat.highlight ? 'text-violet-200' : 'text-gray-500 dark:text-gray-400')}>{stat.label}</p>
+                      <p className={clsx('text-xl font-black mt-1', stat.highlight ? 'text-white' : 'text-gray-900 dark:text-white')}>{stat.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {comparisonAnalysis.by_department?.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 border border-violet-200 dark:border-violet-800 rounded-xl p-5 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">By Department</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={comparisonAnalysis.by_department} margin={{ top: 25, right: 10, left: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip />
+                      <Bar dataKey="avg_value" fill={CHART_COLORS[3]} radius={[4, 4, 0, 0]} name="Average">
+                        <LabelList dataKey="avg_value" position="top" fontSize={11} fill="#64748b" formatter={formatChartLabel} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+            {comparisonAnalysis.trend?.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 border border-violet-200 dark:border-violet-800 rounded-xl p-5 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">12-Month Trend</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={comparisonAnalysis.trend} margin={{ top: 25, right: 10, left: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="value" stroke={CHART_COLORS[3]} strokeWidth={2} dot={{ r: 3 }}>
+                        <LabelList dataKey="value" position="top" fontSize={11} fill="#64748b" formatter={formatChartLabel} />
+                      </Line>
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        </>
       ) : null}
     </div>
   )

@@ -17,7 +17,7 @@ interface IntegrationWizardProps {
   provider: {
     id: string
     name: string
-    type: 'hris' | 'ats' | 'payroll' | 'identity' | 'performance'
+    type: 'hris' | 'ats' | 'payroll' | 'identity' | 'performance' | 'communication' | 'analytics' | 'lms' | 'benefits' | 'custom'
     logo: string
     color: string
   }

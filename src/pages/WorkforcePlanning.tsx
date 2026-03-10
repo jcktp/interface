@@ -17,6 +17,7 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline'
+import AIInsightsPanel from '../components/AIInsightsPanel'
 
 interface SkillGap {
   skill: string
@@ -258,6 +259,11 @@ export default function WorkforcePlanning() {
 
   return (
     <div className="space-y-6">
+      <AIInsightsPanel
+        pageContext="Workforce Planning"
+        prompt="Analyse the workforce planning data including current vs projected headcount, open positions by department, skills gaps, and succession coverage. Identify the most critical gaps, highest-risk areas, and provide 3-5 strategic hiring and planning recommendations for the next quarter."
+      />
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard

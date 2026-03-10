@@ -576,6 +576,9 @@ Reply with ONLY one word: data, chat, or both."""
         return not any(f" {kw} " in f" {sql_upper} " or sql_upper.startswith(kw) for kw in dangerous)
 
     def _execute_sql(self, sql: str, org_id: UUID) -> Tuple[Optional[List[Dict]], Optional[str]]:
+        # Use a savepoint so a failed query doesn't roll back the outer transaction
+        # (which holds the conversation and user message records)
+        sp = self.db.begin_nested()
         try:
             self.db.execute(text("SET LOCAL statement_timeout = '10s'"))
             result = self.db.execute(text(sql))
@@ -595,6 +598,7 @@ Reply with ONLY one word: data, chat, or both."""
                 rows.append(row_dict)
             return rows, None
         except Exception as e:
+            sp.rollback()  # roll back to savepoint only — outer transaction stays intact
             return None, str(e)
 
     def _extract_sql(self, raw: str) -> Optional[str]:

@@ -353,7 +353,7 @@ export default function MyDashboards() {
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={closeCreateModal} />
+          <div className="fixed inset-0" onClick={closeCreateModal} />
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 z-10">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Create Dashboard</h2>
@@ -416,7 +416,7 @@ export default function MyDashboards() {
       {/* Share Modal */}
       {showShareModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={closeShareModal} />
+          <div className="fixed inset-0" onClick={closeShareModal} />
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 z-10">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Share Dashboard</h2>
@@ -468,7 +468,7 @@ export default function MyDashboards() {
       {/* Duplicate Prompt Modal */}
       {showDuplicatePrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={closeDuplicatePrompt} />
+          <div className="fixed inset-0" onClick={closeDuplicatePrompt} />
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 z-10">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Duplicate Dashboard</h2>

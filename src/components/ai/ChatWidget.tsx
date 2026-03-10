@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import api from '../../api'
 import { usePermissions } from '../../hooks/usePermissions'
 import { useStore } from '../../store'
+import MarkdownText from '../MarkdownText'
 import {
   ChatBubbleLeftRightIcon,
   XMarkIcon,
@@ -38,7 +39,8 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isAsking, setIsAsking] = useState(false)
-  
+  const abortControllerRef = useRef<AbortController | null>(null)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesLoadedRef = useRef<string | null>(null)
 
@@ -115,6 +117,13 @@ export default function ChatWidget() {
     setView('chat')
   }
 
+  const cancelAsk = () => {
+    abortControllerRef.current?.abort()
+    setIsAsking(false)
+    // Remove the pending user message
+    setMessages(prev => prev.filter(m => !m.id.startsWith('temp-')))
+  }
+
   const handleAsk = async () => {
     const q = input.trim()
     if (!q || isAsking) return
@@ -127,6 +136,9 @@ export default function ChatWidget() {
     setInput('')
     setIsAsking(true)
 
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     // Optimistic UI for user message
     const tempUserMsg: Message = {
       id: `temp-u-${Date.now()}`,
@@ -137,13 +149,16 @@ export default function ChatWidget() {
     setMessages(prev => [...prev, tempUserMsg])
 
     try {
-      const res = await api.post('/ai/ask', { 
+      const res = await api.post('/ai/ask', {
         question: q,
-        conversation_id: activeConversationId 
+        conversation_id: activeConversationId
+      }, {
+        signal: controller.signal,
+        timeout: 90000, // 90s — Ollama can be slow on first inference
       })
-      
+
       const { answer, conversation_id, message_id } = res.data.data
-      
+
       if (!activeConversationId) {
         setAiWidgetState({ activeConversationId: conversation_id })
         messagesLoadedRef.current = conversation_id
@@ -151,20 +166,30 @@ export default function ChatWidget() {
       }
 
       const assistantMsg: Message = {
-        id: message_id,
+        id: message_id || `msg-${Date.now()}`,
         role: 'assistant',
         content: answer || 'I am sorry, I could not process that.',
         created_at: new Date().toISOString(),
       }
       setMessages(prev => {
-        // Remove temp and add real messages
         const filtered = prev.filter(m => !m.id.startsWith('temp-'))
         return [...filtered, tempUserMsg, assistantMsg]
       })
     } catch (err: any) {
-      toast.error('Error communicating with AI')
+      if (err?.code === 'ERR_CANCELED') return // user cancelled
+      const errMsg: Message = {
+        id: `err-${Date.now()}`,
+        role: 'assistant',
+        content: 'Sorry, I ran into an error. Please try again.',
+        created_at: new Date().toISOString(),
+      }
+      setMessages(prev => {
+        const filtered = prev.filter(m => !m.id.startsWith('temp-'))
+        return [...filtered, tempUserMsg, errMsg]
+      })
     } finally {
       setIsAsking(false)
+      abortControllerRef.current = null
     }
   }
 
@@ -256,11 +281,14 @@ export default function ChatWidget() {
                   )}>
                     <div className={clsx(
                       "max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm shadow-sm leading-relaxed",
-                      msg.role === 'user' 
-                        ? "bg-[#0F172A] text-white rounded-tr-none" 
+                      msg.role === 'user'
+                        ? "bg-[#0F172A] text-white rounded-tr-none"
                         : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-tl-none"
                     )}>
-                      {msg.content}
+                      {msg.role === 'assistant'
+                        ? <MarkdownText content={msg.content} compact />
+                        : msg.content
+                      }
                     </div>
                     <span className="text-[10px] text-gray-400 mt-1 px-1">
                       {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -269,14 +297,21 @@ export default function ChatWidget() {
                 ))}
                 
                 {isAsking && (
-                  <div className="flex justify-start">
+                  <div className="flex justify-start items-center gap-2">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-700 flex items-center gap-2 shadow-sm">
                       <div className="flex gap-1.5">
                         <div className="w-1.5 h-1.5 bg-[#0F172A] rounded-full animate-bounce [animation-delay:-0.3s]" />
                         <div className="w-1.5 h-1.5 bg-[#0F172A] rounded-full animate-bounce [animation-delay:-0.15s]" />
                         <div className="w-1.5 h-1.5 bg-[#0F172A] rounded-full animate-bounce" />
                       </div>
+                      <span className="text-xs text-gray-400">Thinking…</span>
                     </div>
+                    <button
+                      onClick={cancelAsk}
+                      className="text-[10px] text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 )}
                 <div ref={messagesEndRef} />

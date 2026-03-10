@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import api from '../api'
-import { useGlobalFilters } from '../hooks/useGlobalFilters'
+import { usePageFilters } from '../hooks/usePageFilters'
+import PageFilterBar from '../components/PageFilterBar'
 import MetricCard from '../components/MetricCard'
 import MLInsightsBadge from '../components/MLInsightsBadge'
 import BarChart from '../components/charts/BarChart'
@@ -26,6 +27,7 @@ import {
 } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
 import DataSourceSelector from '../components/DataSourceSelector'
+import AIInsightsPanel from '../components/AIInsightsPanel'
 
 interface FlightRiskEmployee {
   id: string
@@ -94,21 +96,21 @@ function SkeletonTable() {
 export default function Retention() {
   const loc = useLocalization()
   const [dataSource, setDataSource] = useState('live-api')
-  const { filterObj } = useGlobalFilters()
+  const { department, setDepartment, location, setLocation, timePeriod, setTimePeriod, filterParams, hasFilters, resetFilters } = usePageFilters()
 
   const { data, isLoading } = useQuery({
-    queryKey: ['retention-metrics', filterObj],
+    queryKey: ['retention-metrics', filterParams],
     queryFn: async () => {
-      const res = await api.get('/metrics/retention', { params: filterObj })
+      const res = await api.get('/metrics/retention', { params: filterParams })
       return res.data
     },
   })
 
   // Reasons for leaving data
   const { data: reasonsRes } = useQuery({
-    queryKey: ['reasons-for-leaving', filterObj],
+    queryKey: ['reasons-for-leaving', filterParams],
     queryFn: async () => {
-      const res = await api.get('/retention/reasons-for-leaving', { params: filterObj })
+      const res = await api.get('/retention/reasons-for-leaving', { params: filterParams })
       return res.data
     },
   })
@@ -306,6 +308,18 @@ export default function Retention() {
         </div>
         <DataSourceSelector module="Retention" selectedSource={dataSource} onSourceChange={setDataSource} compact />
       </div>
+
+      <PageFilterBar
+        department={department} setDepartment={setDepartment}
+        location={location} setLocation={setLocation}
+        timePeriod={timePeriod} setTimePeriod={setTimePeriod}
+        hasFilters={hasFilters} resetFilters={resetFilters}
+      />
+
+      <AIInsightsPanel
+        pageContext="Retention & Turnover"
+        prompt="Analyse the workforce retention and turnover data including overall retention rate, voluntary vs involuntary turnover, flight risk distribution, and turnover by department. Identify the highest-risk areas and recommend targeted retention strategies with 3-5 actionable insights."
+      />
 
       {/* Key Metrics — always visible */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

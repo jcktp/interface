@@ -198,7 +198,7 @@ export interface IntegrationCredentials {
 export interface ApiConnection {
   id: string
   name: string
-  type: 'hris' | 'ats' | 'payroll' | 'identity' | 'performance' | 'custom'
+  type: 'hris' | 'ats' | 'payroll' | 'identity' | 'performance' | 'communication' | 'analytics' | 'lms' | 'benefits' | 'custom'
   provider: string
   status: 'connected' | 'disconnected' | 'error'
   lastSync?: string

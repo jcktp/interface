@@ -19,6 +19,33 @@ interface WidgetConfigProps {
   onSave: (widget: Widget) => void
 }
 
+const TIME_PERIOD_OPTIONS = [
+  { value: '', label: 'Default (all time)' },
+  { value: 'today', label: 'Today' },
+  { value: 'yesterday', label: 'Yesterday' },
+  { value: 'this_week', label: 'This Week' },
+  { value: 'last_week', label: 'Last Week' },
+  { value: 'this_month', label: 'This Month' },
+  { value: 'last_month', label: 'Last Month' },
+  { value: 'this_quarter', label: 'This Quarter' },
+  { value: 'last_quarter', label: 'Last Quarter' },
+  { value: 'this_year', label: 'This Year' },
+  { value: 'last_year', label: 'Last Year' },
+  { value: 'last_30_days', label: 'Last 30 Days' },
+  { value: 'last_90_days', label: 'Last 90 Days' },
+  { value: 'last_12_months', label: 'Last 12 Months' },
+]
+
+const COMPARISON_OPTIONS = [
+  { value: '', label: 'No comparison' },
+  { value: 'wow', label: 'Week over Week (WoW)' },
+  { value: 'mom', label: 'Month over Month (MoM)' },
+  { value: 'qoq', label: 'Quarter over Quarter (QoQ)' },
+  { value: 'yoy', label: 'Year over Year (YoY)' },
+  { value: 'vs_target', label: 'vs. Target' },
+  { value: 'vs_benchmark', label: 'vs. Industry Benchmark' },
+]
+
 const METRIC_CATEGORIES = [
   {
     label: 'Workforce',
@@ -113,15 +140,21 @@ const DATA_SOURCE_CATEGORIES = [
       { value: 'headcount_by_level', label: 'Headcount by Job Level' },
       { value: 'headcount_by_type', label: 'Headcount by Employment Type' },
       { value: 'headcount_trend', label: 'Headcount Trend (Monthly)' },
+      { value: 'headcount_by_age_group', label: 'Headcount by Age Group' },
+      { value: 'headcount_by_tenure_band', label: 'Headcount by Tenure Band' },
+      { value: 'new_hires_trend', label: 'New Hires Trend (Monthly)' },
+      { value: 'remote_vs_onsite', label: 'Remote vs On-site Split' },
     ],
   },
   {
     label: 'Compensation',
     options: [
-      { value: 'salary_by_department', label: 'Salary by Department' },
-      { value: 'salary_by_level', label: 'Salary by Job Level' },
-      { value: 'salary_by_location', label: 'Salary by Location' },
-      { value: 'salary_distribution', label: 'Salary Distribution' },
+      { value: 'salary_by_department', label: 'Avg Salary by Department' },
+      { value: 'salary_by_level', label: 'Avg Salary by Job Level' },
+      { value: 'salary_by_location', label: 'Avg Salary by Location' },
+      { value: 'salary_distribution', label: 'Salary Distribution (Bands)' },
+      { value: 'payroll_trend', label: 'Total Payroll Trend (Monthly)' },
+      { value: 'compa_ratio_by_department', label: 'Compa-Ratio by Department' },
     ],
   },
   {
@@ -129,36 +162,56 @@ const DATA_SOURCE_CATEGORIES = [
     options: [
       { value: 'candidates_by_status', label: 'Candidates by Status' },
       { value: 'candidates_by_source', label: 'Candidates by Source' },
-      { value: 'requisitions_by_department', label: 'Requisitions by Department' },
+      { value: 'requisitions_by_department', label: 'Open Reqs by Department' },
       { value: 'requisitions_by_status', label: 'Requisitions by Status' },
       { value: 'hires_by_month', label: 'Hires by Month' },
-      { value: 'source_effectiveness', label: 'Source Effectiveness' },
+      { value: 'source_effectiveness', label: 'Source Effectiveness (%)' },
+      { value: 'time_to_fill_by_department', label: 'Time to Fill by Department' },
+      { value: 'offer_acceptance_trend', label: 'Offer Acceptance Trend' },
+      { value: 'pipeline_funnel', label: 'Hiring Pipeline Funnel' },
     ],
   },
   {
-    label: 'Retention',
+    label: 'Retention & Attrition',
     options: [
       { value: 'turnover_by_department', label: 'Turnover by Department' },
       { value: 'turnover_by_tenure', label: 'Turnover by Tenure Band' },
       { value: 'turnover_trend', label: 'Turnover Trend (Monthly)' },
       { value: 'termination_reasons', label: 'Termination Reasons' },
+      { value: 'flight_risk_by_department', label: 'Flight Risk by Department' },
+      { value: 'voluntary_vs_involuntary', label: 'Voluntary vs Involuntary Attrition' },
+      { value: 'retention_rate_trend', label: 'Retention Rate Trend' },
     ],
   },
   {
-    label: 'Diversity',
+    label: 'Diversity & Inclusion',
     options: [
       { value: 'gender_distribution', label: 'Gender Distribution' },
-      { value: 'ethnicity_distribution', label: 'Ethnicity Distribution' },
+      { value: 'ethnicity_distribution', label: 'Ethnic Group Distribution' },
       { value: 'gender_by_department', label: 'Gender by Department' },
       { value: 'gender_by_level', label: 'Gender by Job Level' },
+      { value: 'women_in_leadership_trend', label: 'Women in Leadership Trend' },
+      { value: 'pay_gap_by_department', label: 'Pay Gap by Department' },
     ],
   },
   {
-    label: 'Performance',
+    label: 'Performance & Engagement',
     options: [
-      { value: 'performance_distribution', label: 'Performance Distribution' },
-      { value: 'performance_by_department', label: 'Performance by Department' },
-      { value: 'engagement_by_department', label: 'Engagement by Department' },
+      { value: 'performance_distribution', label: 'Performance Rating Distribution' },
+      { value: 'performance_by_department', label: 'Avg Performance by Department' },
+      { value: 'engagement_by_department', label: 'Avg Engagement by Department' },
+      { value: 'performance_trend', label: 'Performance Trend (Monthly)' },
+      { value: 'engagement_trend', label: 'Engagement Trend (Monthly)' },
+      { value: 'high_low_performers_by_dept', label: 'High vs Low Performers by Dept' },
+    ],
+  },
+  {
+    label: 'Attendance',
+    options: [
+      { value: 'attendance_by_department', label: 'Attendance Rate by Department' },
+      { value: 'attendance_trend', label: 'Attendance Trend (Monthly)' },
+      { value: 'absence_reasons', label: 'Absence Reasons Distribution' },
+      { value: 'sick_days_by_department', label: 'Avg Sick Days by Department' },
     ],
   },
   {
@@ -540,8 +593,8 @@ export default function WidgetConfig({ widget, isOpen, onClose, onSave }: Widget
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] flex flex-col pointer-events-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Configure Widget</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
@@ -575,6 +628,68 @@ export default function WidgetConfig({ widget, isOpen, onClose, onSave }: Widget
           </div>
 
           {renderConfigFields()}
+
+          {/* ── Filters ── */}
+          <div className="pt-3 border-t border-gray-100">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Filters & Comparison</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Time Period</label>
+                <select
+                  value={config.time_period || ''}
+                  onChange={(e) => setConfig({ ...config, time_period: e.target.value || undefined })}
+                  className="input mt-1"
+                >
+                  {TIME_PERIOD_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Comparison</label>
+                <select
+                  value={config.comparison || ''}
+                  onChange={(e) => setConfig({ ...config, comparison: e.target.value || undefined })}
+                  className="input mt-1"
+                >
+                  {COMPARISON_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                {config.comparison && config.comparison !== 'vs_target' && config.comparison !== 'vs_benchmark' && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {config.comparison === 'wow' && 'Shows current week vs previous week'}
+                    {config.comparison === 'mom' && 'Shows current month vs previous month'}
+                    {config.comparison === 'qoq' && 'Shows current quarter vs previous quarter'}
+                    {config.comparison === 'yoy' && 'Shows current period vs same period last year'}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Department Filter</label>
+                <input
+                  type="text"
+                  value={config.department || ''}
+                  onChange={(e) => setConfig({ ...config, department: e.target.value || undefined })}
+                  className="input mt-1"
+                  placeholder="e.g. Engineering (leave blank for all)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Location Filter</label>
+                <input
+                  type="text"
+                  value={config.location || ''}
+                  onChange={(e) => setConfig({ ...config, location: e.target.value || undefined })}
+                  className="input mt-1"
+                  placeholder="e.g. New York (leave blank for all)"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 p-6 border-t border-gray-200">

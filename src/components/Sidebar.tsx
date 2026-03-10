@@ -100,7 +100,7 @@ const sections: NavSection[] = [
   {
     label: 'Planning',
     items: [
-      { name: 'Workforce', href: '/app/workforce-planning', abbr: 'WF', permission: 'planning:view', icon: BuildingOffice2Icon, iconSolid: BuildingOffice2Solid },
+      { name: 'Workforce Planning', href: '/app/workforce-planning', abbr: 'WF', permission: 'planning:view', icon: BuildingOffice2Icon, iconSolid: BuildingOffice2Solid },
       { name: 'Performance', href: '/app/performance', abbr: 'PF', permission: 'dashboard:view', icon: PresentationChartLineIcon, iconSolid: PresentationChartLineSolid },
       { name: 'Compensation', href: '/app/compensation', abbr: 'CP', permission: 'compensation:view', icon: BanknotesIcon, iconSolid: BanknotesSolid },
       { name: 'Scenario Modeling', href: '/app/scenarios', abbr: 'SM', permission: 'planning:view', icon: AdjustmentsHorizontalIcon, iconSolid: AdjustmentsHorizontalSolid },
@@ -128,7 +128,7 @@ const sections: NavSection[] = [
   {
     label: 'Data',
     items: [
-      { name: 'Management', href: '/app/data', abbr: 'MG', permission: 'uploads:view', icon: CircleStackIcon, iconSolid: CircleStackSolid },
+      { name: 'Data Management', href: '/app/data', abbr: 'MG', permission: 'uploads:view', icon: CircleStackIcon, iconSolid: CircleStackSolid },
       { name: 'SQL Editor', href: '/app/query-editor', abbr: 'SQ', permission: 'queries:execute', icon: CodeBracketIcon, iconSolid: CodeBracketSolid },
       { name: 'Metric Config', href: '/app/metrics', abbr: 'MC', permission: 'kpis:view', icon: WrenchScrewdriverIcon, iconSolid: WrenchScrewdriverSolid },
     ],
@@ -136,7 +136,7 @@ const sections: NavSection[] = [
   {
     label: 'Admin',
     items: [
-      { name: 'Users', href: '/app/admin/users', abbr: 'US', permission: 'users:manage_roles', icon: UserCircleIcon, iconSolid: UserCircleSolid },
+      { name: 'User Management', href: '/app/admin/users', abbr: 'US', permission: 'users:manage_roles', icon: UserCircleIcon, iconSolid: UserCircleSolid },
       { name: 'API Docs', href: '/app/api-docs', abbr: 'AP', permission: 'analytics:view', icon: DocumentTextIcon, iconSolid: DocumentTextSolid },
       { name: 'Settings', href: '/app/settings', abbr: 'ST', icon: Cog6ToothIcon, iconSolid: Cog6ToothSolid },
     ],

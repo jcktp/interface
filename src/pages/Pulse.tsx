@@ -7,6 +7,7 @@ import api from '../api'
 import { useStore } from '../store'
 import { usePermissions } from '../hooks/usePermissions'
 import HealthMetricCard from '../components/command-center/HealthMetricCard'
+import AIInsightsPanel from '../components/AIInsightsPanel'
 import SignalsPanel from '../components/command-center/SignalsPanel'
 import MiniTrendChart from '../components/command-center/MiniTrendChart'
 import { CHART_COLORS } from '../utils/chartColors'
@@ -228,6 +229,11 @@ export default function Pulse() {
           )}
         </div>
       </div>
+
+      <AIInsightsPanel
+        pageContext="Pulse — Org Health"
+        prompt="Analyse the current organisational health signals, active alerts, and predictive risk indicators. Which departments or metrics are most at risk? What patterns do you see across the alerts? Provide prioritised recommendations for immediate action and proactive risk mitigation."
+      />
 
       {/* SECTION 1: CORE HEALTH (THE NOW) */}
       <section>

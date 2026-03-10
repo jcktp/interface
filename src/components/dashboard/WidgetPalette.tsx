@@ -13,37 +13,59 @@ interface WidgetPaletteProps {
   onAddWidget: (type: WidgetType) => void
 }
 
-const WIDGET_TYPES: { type: WidgetType; label: string; icon: React.ComponentType<{ className?: string }>; description: string }[] = [
-  { type: 'metric', label: 'Metric', icon: HashtagIcon, description: 'Single value with optional comparison' },
-  { type: 'bar', label: 'Bar Chart', icon: ChartBarIcon, description: 'Compare values across categories' },
-  { type: 'line', label: 'Line Chart', icon: PresentationChartLineIcon, description: 'Show trends over time' },
-  { type: 'pie', label: 'Pie Chart', icon: ChartPieIcon, description: 'Show proportions of a whole' },
-  { type: 'table', label: 'Table', icon: TableCellsIcon, description: 'Display tabular data' },
-  { type: 'gauge', label: 'Gauge', icon: BeakerIcon, description: 'Show progress toward a goal' },
-  { type: 'sql', label: 'SQL Query', icon: CodeBracketIcon, description: 'Run custom SQL queries' },
+const WIDGET_GROUPS = [
+  {
+    label: 'Single Value',
+    items: [
+      { type: 'metric' as WidgetType, label: 'Metric Card', icon: HashtagIcon, description: 'Single KPI with trend' },
+      { type: 'gauge' as WidgetType, label: 'Gauge', icon: BeakerIcon, description: 'Progress toward a target' },
+    ],
+  },
+  {
+    label: 'Charts',
+    items: [
+      { type: 'bar' as WidgetType, label: 'Bar Chart', icon: ChartBarIcon, description: 'Compare across categories' },
+      { type: 'line' as WidgetType, label: 'Line Chart', icon: PresentationChartLineIcon, description: 'Trends over time' },
+      { type: 'area' as WidgetType, label: 'Area Chart', icon: PresentationChartLineIcon, description: 'Volume trends over time' },
+      { type: 'pie' as WidgetType, label: 'Pie / Donut', icon: ChartPieIcon, description: 'Proportions of a whole' },
+    ],
+  },
+  {
+    label: 'Data',
+    items: [
+      { type: 'table' as WidgetType, label: 'Table', icon: TableCellsIcon, description: 'Tabular data view' },
+      { type: 'sql' as WidgetType, label: 'SQL Query', icon: CodeBracketIcon, description: 'Custom SQL visualisation' },
+    ],
+  },
 ]
 
 export default function WidgetPalette({ onAddWidget }: WidgetPaletteProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
-      <h3 className="text-sm font-semibold text-gray-900 mb-3">Add Widget</h3>
-      <div className="grid grid-cols-2 gap-2">
-        {WIDGET_TYPES.map((widget) => {
-          const Icon = widget.icon
-          return (
-            <button
-              key={widget.type}
-              onClick={() => onAddWidget(widget.type)}
-              className="flex flex-col items-center p-3 border border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors group"
-            >
-              <Icon className="w-6 h-6 text-gray-400 group-hover:text-primary-600 mb-1" />
-              <span className="text-xs font-medium text-gray-700 group-hover:text-primary-700">
-                {widget.label}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-4">
+      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">Add Widget</h3>
+      {WIDGET_GROUPS.map(group => (
+        <div key={group.label}>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">{group.label}</p>
+          <div className="space-y-1">
+            {group.items.map(widget => {
+              const Icon = widget.icon
+              return (
+                <button
+                  key={widget.type}
+                  onClick={() => onAddWidget(widget.type)}
+                  className="w-full flex items-center gap-3 p-2.5 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group text-left"
+                >
+                  <Icon className="w-4 h-4 text-gray-400 group-hover:text-blue-600 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-700 dark:group-hover:text-blue-300">{widget.label}</p>
+                    <p className="text-[10px] text-gray-400 leading-tight">{widget.description}</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

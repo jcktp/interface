@@ -215,7 +215,7 @@ export default function Employees() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Employee Directory</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Directory</h1>
           <p className="text-sm text-gray-500 mt-1">
             {employees.length.toLocaleString()} employees across {metrics.depts} departments
           </p>

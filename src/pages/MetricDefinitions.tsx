@@ -215,7 +215,7 @@ export default function MetricDefinitions() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Metric Definitions</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Metric Config</h1>
           <p className="text-sm text-gray-500 mt-1">View and customize how metrics are calculated. Link saved SQL queries to override built-in formulas.</p>
         </div>
         <div className="flex items-center gap-2">

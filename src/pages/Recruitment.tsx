@@ -45,6 +45,7 @@ import { exportTableToPdf } from '../utils/exportPdf'
 import Papa from 'papaparse'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
+import AIInsightsPanel from '../components/AIInsightsPanel'
 
 interface RecruiterGoal {
   id: string
@@ -254,7 +255,7 @@ export default function Recruitment() {
 
   const syncHiresMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.get(`/recruiter-goals/auto-populate?year=${selectedYear}`)
+      const res = await api.post(`/recruiter-goals/auto-populate`, { year: selectedYear })
       return res.data
     },
     onSuccess: (data: any) => {
@@ -945,6 +946,11 @@ export default function Recruitment() {
           <p className="text-sm text-gray-500 mt-1">Manage hiring pipeline and recruiter performance</p>
         </div>
       </div>
+
+      <AIInsightsPanel
+        pageContext="Recruitment"
+        prompt="Analyse the current recruitment pipeline including open positions, candidate counts, time to fill, offer acceptance rates, and cost per hire. Provide 3-5 key insights about hiring velocity, bottlenecks, and recruiter effectiveness. Suggest concrete actions to improve hiring outcomes."
+      />
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-gray-200">

@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '../api'
-import { useGlobalFilters } from '../hooks/useGlobalFilters'
+import { usePageFilters } from '../hooks/usePageFilters'
+import PageFilterBar from '../components/PageFilterBar'
 import MetricCard from '../components/MetricCard'
 import BarChart from '../components/charts/BarChart'
 import PieChart from '../components/charts/PieChart'
@@ -17,6 +18,7 @@ import {
   ChartBarIcon,
 } from '@heroicons/react/24/outline'
 import DataSourceSelector from '../components/DataSourceSelector'
+import AIInsightsPanel from '../components/AIInsightsPanel'
 import clsx from 'clsx'
 import {
   LineChart,
@@ -160,21 +162,21 @@ export default function Diversity() {
   const [dataSource, setDataSource] = useState('live-api')
   const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'trends'>('overview')
   const [breakdownView, setBreakdownView] = useState<'departments' | 'teams' | 'managers'>('departments')
-  const { filterObj, effectiveDateRange } = useGlobalFilters()
+  const { department, setDepartment, location, setLocation, timePeriod, setTimePeriod, filterParams, hasFilters, resetFilters } = usePageFilters()
 
   const { data: metricsRes, isLoading } = useQuery({
-    queryKey: ['diversity-metrics', filterObj],
+    queryKey: ['diversity-metrics', filterParams],
     queryFn: async () => {
-      const res = await api.get('/metrics/diversity', { params: filterObj })
+      const res = await api.get('/metrics/diversity', { params: filterParams })
       return res.data
     },
   })
 
   const { data: breakdownRes, isLoading: breakdownLoading } = useQuery({
-    queryKey: ['diversity-breakdown', filterObj],
+    queryKey: ['diversity-breakdown', filterParams],
     queryFn: async () => {
       const res = await api.get('/metrics/diversity/breakdown', {
-        params: { departments: filterObj.departments, locations: filterObj.locations }
+        params: { departments: filterParams.departments, locations: filterParams.locations }
       })
       return res.data
     },
@@ -182,15 +184,15 @@ export default function Diversity() {
   })
 
   const { data: trendsRes, isLoading: trendsLoading } = useQuery({
-    queryKey: ['diversity-trends', filterObj],
+    queryKey: ['diversity-trends', filterParams],
     queryFn: async () => {
       const months = (() => {
-        if (!effectiveDateRange.start || !effectiveDateRange.end) return 12
-        const diff = new Date(effectiveDateRange.end).getTime() - new Date(effectiveDateRange.start).getTime()
+        if (!filterParams.start_date || !filterParams.end_date) return 12
+        const diff = new Date(filterParams.end_date).getTime() - new Date(filterParams.start_date).getTime()
         return Math.min(24, Math.max(3, Math.round(diff / (1000 * 60 * 60 * 24 * 30))))
       })()
       const res = await api.get('/metrics/diversity/trends', {
-        params: { months, departments: filterObj.departments, locations: filterObj.locations }
+        params: { months, departments: filterParams.departments, locations: filterParams.locations }
       })
       return res.data
     },
@@ -234,6 +236,18 @@ export default function Diversity() {
         </div>
         <DataSourceSelector module="Diversity" selectedSource={dataSource} onSourceChange={setDataSource} compact />
       </div>
+
+      <PageFilterBar
+        department={department} setDepartment={setDepartment}
+        location={location} setLocation={setLocation}
+        timePeriod={timePeriod} setTimePeriod={setTimePeriod}
+        hasFilters={hasFilters} resetFilters={resetFilters}
+      />
+
+      <AIInsightsPanel
+        pageContext="Diversity & Inclusion"
+        prompt="Analyse the diversity and inclusion metrics including gender representation, ethnic diversity, women in leadership percentages, and pay equity gaps. Identify where the organisation is leading and where critical gaps exist. Provide 3-5 specific, data-driven recommendations to improve D&I outcomes."
+      />
 
       {/* Key Metrics — always visible */}
       {isLoading ? (

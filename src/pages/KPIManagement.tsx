@@ -3,7 +3,8 @@ import toast from 'react-hot-toast'
 import api from '../api'
 import { usePermissions } from '../hooks/usePermissions'
 import { useLocalization } from '../hooks/useLocalization'
-import { useGlobalFilters } from '../hooks/useGlobalFilters'
+import { usePageFilters } from '../hooks/usePageFilters'
+import PageFilterBar from '../components/PageFilterBar'
 import { useFinancialMetrics } from '../hooks'
 import {
   PlusIcon,
@@ -148,9 +149,9 @@ function getDatesFromPeriod(period: string, refStart?: string): { start: string;
 export default function KPIManagement() {
   const { hasPermission } = usePermissions()
   const loc = useLocalization()
-  const { filterObj } = useGlobalFilters()
+  const { department, setDepartment, location, setLocation, timePeriod, setTimePeriod, filterParams, hasFilters, resetFilters } = usePageFilters()
   const [dataSource, setDataSource] = useState('live-api')
-  const { data: financialData, isLoading: financialLoading } = useFinancialMetrics()
+  const { data: financialData, isLoading: financialLoading } = useFinancialMetrics(filterParams)
   const [dashboard, setDashboard] = useState<KPIDashboardItem[]>([])
   const [targets, setTargets] = useState<KPITarget[]>([])
   const [byLevelData, setByLevelData] = useState<ByLevelData | null>(null)
@@ -169,6 +170,15 @@ export default function KPIManagement() {
   const [editingTarget, setEditingTarget] = useState<KPITarget | null>(null)
   const [editForm, setEditForm] = useState({ target_value: '', period_start: '', period_end: '', department: '', notes: '' })
   const [searchQuery, setSearchQuery] = useState('')
+  // Targets tab filters
+  const [targetsSearch, setTargetsSearch] = useState('')
+  const [targetsDeptFilter, setTargetsDeptFilter] = useState('')
+  const [targetsStatusFilter, setTargetsStatusFilter] = useState('')
+  // By-level period filter
+  const [levelPeriodFilter, setLevelPeriodFilter] = useState<string>('all')
+  // Targets tab pagination
+  const [targetsPage, setTargetsPage] = useState(1)
+  const TARGETS_PER_PAGE = 20
   // Inline editing state for targets tab
   const [inlineEditId, setInlineEditId] = useState<string | null>(null)
   const [inlineEditValues, setInlineEditValues] = useState({ target_value: '', period: 'monthly' })
@@ -177,9 +187,9 @@ export default function KPIManagement() {
     setLoading(true)
     try {
       const [dashRes, targetsRes, byLevelRes] = await Promise.all([
-        api.get('/kpis/dashboard', { params: filterObj }).catch(() => ({ data: [] })),
-        api.get('/kpis/targets', { params: filterObj }).catch(() => ({ data: [] })),
-        api.get('/kpis/targets/by-level').catch(() => ({ data: null })),
+        api.get('/kpis/dashboard', { params: filterParams }).catch(() => ({ data: [] })),
+        api.get('/kpis/targets', { params: filterParams }).catch(() => ({ data: [] })),
+        api.get('/kpis/targets/by-level', { params: filterParams }).catch(() => ({ data: null })),
       ])
       const dashData = Array.isArray(dashRes.data) ? dashRes.data : dashRes.data?.data || dashRes.data?.items || []
       setDashboard(dashData)
@@ -193,11 +203,31 @@ export default function KPIManagement() {
     } finally {
       setLoading(false)
     }
-  }, [filterObj])
+  }, [department, location, timePeriod]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // Re-fetch by-level when period filter changes
+  const fetchByLevel = useCallback(async (period: string) => {
+    const params: Record<string, string> = { ...filterParams }
+    if (period !== 'all') {
+      const dates = getDatesFromPeriod(period)
+      params.start_date = dates.start
+      params.end_date = dates.end
+    }
+    try {
+      const res = await api.get('/kpis/targets/by-level', { params }).catch(() => ({ data: null }))
+      if (res.data?.data) setByLevelData(res.data.data)
+    } catch { /* silent */ }
+  }, [department, location, timePeriod]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (activeTab === 'by-level') {
+      fetchByLevel(levelPeriodFilter)
+    }
+  }, [levelPeriodFilter, activeTab, fetchByLevel])
 
   // Filtered dashboard items based on search
   const filteredDashboard = useMemo(() => {
@@ -213,6 +243,18 @@ export default function KPIManagement() {
   const filteredCategories = useMemo(() => {
     return [...new Set(filteredDashboard.map(k => k.category))]
   }, [filteredDashboard])
+
+  const filteredTargets = useMemo(() => {
+    setTargetsPage(1)
+    return targets.filter(t => {
+      const kpi = dashboard.find(k => k.kpi_id === t.kpi_definition_id)
+      const kpiName = kpi?.name?.toLowerCase() || ''
+      if (targetsSearch && !kpiName.includes(targetsSearch.toLowerCase()) && !t.notes?.toLowerCase().includes(targetsSearch.toLowerCase())) return false
+      if (targetsDeptFilter && t.department !== targetsDeptFilter && !(targetsDeptFilter === '__all__' && !t.department)) return false
+      if (targetsStatusFilter && t.status !== targetsStatusFilter) return false
+      return true
+    })
+  }, [targets, dashboard, targetsSearch, targetsDeptFilter, targetsStatusFilter])
 
   const handleCalculate = async () => {
     const toastId = toast.loading('Calculating KPI values...')
@@ -258,16 +300,6 @@ export default function KPIManagement() {
     }
   }
 
-  const handleEditTarget = (target: KPITarget) => {
-    setEditingTarget(target)
-    setEditForm({
-      target_value: String(target.target_value),
-      period_start: target.period_start,
-      period_end: target.period_end,
-      department: target.department || '',
-      notes: target.notes || '',
-    })
-  }
 
   const handleSaveEdit = async () => {
     if (!editingTarget) return
@@ -445,6 +477,13 @@ export default function KPIManagement() {
         </div>
       </div>
 
+      <PageFilterBar
+        department={department} setDepartment={setDepartment}
+        location={location} setLocation={setLocation}
+        timePeriod={timePeriod} setTimePeriod={setTimePeriod}
+        hasFilters={hasFilters} resetFilters={resetFilters}
+      />
+
       {/* Tabs + Search */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
@@ -479,10 +518,51 @@ export default function KPIManagement() {
             <select
               value={levelKpiFilter}
               onChange={e => setLevelKpiFilter(e.target.value)}
-              className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
               <option value="all">All KPIs</option>
               {dashboard.map(k => <option key={k.kpi_id} value={k.kpi_id}>{k.name}</option>)}
+            </select>
+            <select
+              value={levelPeriodFilter}
+              onChange={e => setLevelPeriodFilter(e.target.value)}
+              className="text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="all">All Periods</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="annual">Annual</option>
+            </select>
+          </div>
+        )}
+        {activeTab === 'targets' && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <input
+              type="text"
+              value={targetsSearch}
+              onChange={e => setTargetsSearch(e.target.value)}
+              placeholder="Search targets…"
+              className="text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2.5 py-1.5 w-36 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+            <select
+              value={targetsDeptFilter}
+              onChange={e => setTargetsDeptFilter(e.target.value)}
+              className="text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="">All Departments</option>
+              {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <select
+              value={targetsStatusFilter}
+              onChange={e => setTargetsStatusFilter(e.target.value)}
+              className="text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="draft">Draft</option>
+              <option value="pending_approval">Pending Approval</option>
+              <option value="achieved">Achieved</option>
+              <option value="missed">Missed</option>
             </select>
           </div>
         )}
@@ -908,7 +988,7 @@ export default function KPIManagement() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {targets.map(target => {
+              {filteredTargets.slice((targetsPage - 1) * TARGETS_PER_PAGE, targetsPage * TARGETS_PER_PAGE).map(target => {
                 const kpi = dashboard.find(k => k.kpi_id === target.kpi_definition_id)
                 const isInlineEditing = inlineEditId === target.id
                 const periodLabel = getPeriodFromDates(target.period_start, target.period_end)
@@ -988,12 +1068,8 @@ export default function KPIManagement() {
                                 }`}
                               />
                             </button>
-                            {/* Inline edit */}
+                            {/* Edit target */}
                             <button onClick={() => startInlineEdit(target)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-0.5" title="Edit target">
-                              <PencilSquareIcon className="h-3.5 w-3.5" />
-                            </button>
-                            {/* Full edit modal */}
-                            <button onClick={() => handleEditTarget(target)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" title="Full edit">
                               <PencilSquareIcon className="h-3.5 w-3.5" />
                             </button>
                             {/* Approve/Reject for pending */}
@@ -1014,11 +1090,45 @@ export default function KPIManagement() {
                   </tr>
                 )
               })}
-              {targets.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-xs text-gray-500 dark:text-gray-400">No targets set yet</td></tr>
+              {filteredTargets.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-6 text-center text-xs text-gray-500 dark:text-gray-400">
+                  {targets.length === 0 ? 'No targets set yet' : 'No targets match the current filters'}
+                </td></tr>
               )}
             </tbody>
           </table>
+          {filteredTargets.length > TARGETS_PER_PAGE && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {(targetsPage - 1) * TARGETS_PER_PAGE + 1}–{Math.min(targetsPage * TARGETS_PER_PAGE, filteredTargets.length)} of {filteredTargets.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setTargetsPage(p => Math.max(1, p - 1))}
+                  disabled={targetsPage === 1}
+                  className="px-2.5 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Prev
+                </button>
+                {Array.from({ length: Math.ceil(filteredTargets.length / TARGETS_PER_PAGE) }, (_, i) => i + 1).map(pg => (
+                  <button
+                    key={pg}
+                    onClick={() => setTargetsPage(pg)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded border transition-colors ${pg === targetsPage ? 'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                  >
+                    {pg}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setTargetsPage(p => Math.min(Math.ceil(filteredTargets.length / TARGETS_PER_PAGE), p + 1))}
+                  disabled={targetsPage >= Math.ceil(filteredTargets.length / TARGETS_PER_PAGE)}
+                  className="px-2.5 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -79,46 +79,54 @@ export default function WidgetWrapper({ widget, isEditing, onEdit, onDelete, dep
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50">
-        <h3 className="text-sm font-medium text-gray-700 truncate">{widget.title}</h3>
-        <div
-          className={`widget-actions flex items-center gap-1 transition-opacity ${
-            isHovered || isEditing ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              refetch()
-            }}
-            className="p-1 text-gray-400 hover:text-gray-600 rounded"
-            title="Refresh"
-          >
-            <ArrowPathIcon className={`w-4 h-4 ${isRefetching ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onEdit()
-            }}
-            className="p-1 text-gray-400 hover:text-primary-600 rounded"
-            title="Edit"
-          >
-            <PencilIcon className="w-4 h-4" />
-          </button>
-          {isEditing && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete()
-              }}
-              className="p-1 text-gray-400 hover:text-danger-600 rounded"
-              title="Delete"
-            >
-              <TrashIcon className="w-4 h-4" />
-            </button>
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50 min-h-[38px]">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <h3 className="text-sm font-medium text-gray-700 truncate">{widget.title}</h3>
+          {/* Filter badges */}
+          {widget.config.time_period && (
+            <span className="text-[9px] font-semibold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded shrink-0">
+              {widget.config.time_period.replace(/_/g, ' ')}
+            </span>
+          )}
+          {widget.config.comparison && (
+            <span className="text-[9px] font-semibold bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded shrink-0 uppercase">
+              {widget.config.comparison}
+            </span>
+          )}
+          {widget.config.department && (
+            <span className="text-[9px] font-medium bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded shrink-0 truncate max-w-[80px]">
+              {widget.config.department}
+            </span>
           )}
         </div>
+        {/* Actions — only visible on hover or in edit mode */}
+        {(isHovered || isEditing) && (
+          <div className="widget-actions flex items-center gap-1 shrink-0 ml-1">
+            <button
+              onClick={(e) => { e.stopPropagation(); refetch() }}
+              className="p-1 text-gray-400 hover:text-gray-600 rounded"
+              title="Refresh"
+            >
+              <ArrowPathIcon className={`w-4 h-4 ${isRefetching ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit() }}
+              className="p-1 text-gray-400 hover:text-primary-600 rounded"
+              title="Edit widget"
+            >
+              <PencilIcon className="w-4 h-4" />
+            </button>
+            {isEditing && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete() }}
+                className="p-1 text-gray-400 hover:text-danger-600 rounded"
+                title="Delete widget"
+              >
+                <TrashIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Content */}

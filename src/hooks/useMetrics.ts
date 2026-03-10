@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '../api'
-import { useGlobalFilters } from './useGlobalFilters'
 
 interface MetricsData {
   headcount: {
@@ -68,12 +67,11 @@ interface MetricsResponse {
 }
 
 // Comprehensive dashboard metrics endpoint
-export function useDashboardMetrics() {
-  const { filterObj } = useGlobalFilters()
+export function useDashboardMetrics(filterParams: Record<string, string> = {}) {
   return useQuery<MetricsResponse>({
-    queryKey: ['dashboard-metrics', filterObj],
+    queryKey: ['dashboard-metrics', filterParams],
     queryFn: async () => {
-      const response = await api.get('/metrics/dashboard', { params: filterObj })
+      const response = await api.get('/metrics/dashboard', { params: filterParams })
       return response.data
     },
     staleTime: 5 * 60 * 1000,
@@ -112,12 +110,11 @@ interface FinancialMetricsResponse {
   data: FinancialMetricsData
 }
 
-export function useFinancialMetrics() {
-  const { filterObj } = useGlobalFilters()
+export function useFinancialMetrics(filterParams: Record<string, string> = {}) {
   return useQuery<FinancialMetricsResponse>({
-    queryKey: ['financial-metrics', filterObj],
+    queryKey: ['financial-metrics', filterParams],
     queryFn: async () => {
-      const response = await api.get('/metrics/financial', { params: filterObj })
+      const response = await api.get('/metrics/financial', { params: filterParams })
       return response.data
     },
     staleTime: 5 * 60 * 1000,

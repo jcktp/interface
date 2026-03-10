@@ -283,7 +283,7 @@ export default function MLModels() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Prediction Modeling</h1>
+          <h1 className="text-2xl font-bold text-gray-900">ML Models</h1>
           <p className="text-gray-600 mt-1">
             Build, train, and deploy ML models for workforce predictions
           </p>

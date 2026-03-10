@@ -290,7 +290,7 @@ export default function QueryEditor() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">SQL Query Editor</h1>
+          <h1 className="text-2xl font-bold text-gray-900">SQL Editor</h1>
           <p className="text-gray-600 mt-1">
             Run read-only queries against your HR data
           </p>

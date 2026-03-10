@@ -15,7 +15,7 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use((config) => {
   // Get token from localStorage (zustand persisted state)
-  const storage = localStorage.getItem('hr-analytics-storage')
+  const storage = localStorage.getItem('interface-storage')
   if (storage) {
     try {
       const state = JSON.parse(storage)
@@ -42,7 +42,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry && !_redirectingToLogin) {
       originalRequest._retry = true
 
-      const storage = localStorage.getItem('hr-analytics-storage')
+      const storage = localStorage.getItem('interface-storage')
       if (storage) {
         try {
           const state = JSON.parse(storage)
@@ -53,7 +53,7 @@ api.interceptors.response.use(
 
             if (response.data.access_token) {
               state.state.token = response.data.access_token
-              localStorage.setItem('hr-analytics-storage', JSON.stringify(state))
+              localStorage.setItem('interface-storage', JSON.stringify(state))
               originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`
               return api(originalRequest)
             }
@@ -66,20 +66,20 @@ api.interceptors.response.use(
             state.state.refreshToken = null
             state.state.isAuthenticated = false
             state.state.user = null
-            localStorage.setItem('hr-analytics-storage', JSON.stringify(state))
+            localStorage.setItem('interface-storage', JSON.stringify(state))
             window.location.href = '/login'
           }
         } catch {
           if (!_redirectingToLogin) {
             _redirectingToLogin = true
-            const stored = localStorage.getItem('hr-analytics-storage')
+            const stored = localStorage.getItem('interface-storage')
             if (stored) {
               const state = JSON.parse(stored)
               state.state.token = null
               state.state.refreshToken = null
               state.state.isAuthenticated = false
               state.state.user = null
-              localStorage.setItem('hr-analytics-storage', JSON.stringify(state))
+              localStorage.setItem('interface-storage', JSON.stringify(state))
             }
             window.location.href = '/login'
           }

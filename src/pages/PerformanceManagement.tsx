@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '../api'
-import { useGlobalFilters } from '../hooks/useGlobalFilters'
+import { usePageFilters } from '../hooks/usePageFilters'
+import PageFilterBar from '../components/PageFilterBar'
 import { useLocalization } from '../hooks/useLocalization'
 import MetricCard from '../components/MetricCard'
 import LineChart from '../components/charts/LineChart'
@@ -11,6 +12,7 @@ import { CHART_COLORS, PIE_COLORS } from '../utils/chartColors'
 import { ColumnDef } from '@tanstack/react-table'
 import Papa from 'papaparse'
 import toast from 'react-hot-toast'
+import AIInsightsPanel from '../components/AIInsightsPanel'
 import {
   StarIcon,
   HeartIcon,
@@ -457,22 +459,22 @@ function PerformanceHierarchyTable({ data, loading }: { data: HierarchyDepartmen
 
 export default function PerformanceManagement() {
   const loc = useLocalization()
-  const { filterObj } = useGlobalFilters()
+  const { department, setDepartment, location, setLocation, timePeriod, setTimePeriod, filterParams, hasFilters, resetFilters } = usePageFilters()
   const [activeTab, setActiveTab] = useState<DimensionTab>('department')
   const [performerTab, setPerformerTab] = useState<PerformerTab>('top')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['performance-dashboard', filterObj],
+    queryKey: ['performance-dashboard', filterParams],
     queryFn: async () => {
-      const res = await api.get('/performance/dashboard', { params: filterObj })
+      const res = await api.get('/performance/dashboard', { params: filterParams })
       return res.data.data as PerformanceData
     },
   })
 
   const { data: hierarchyData, isLoading: hierarchyLoading } = useQuery({
-    queryKey: ['performance-hierarchy', filterObj],
+    queryKey: ['performance-hierarchy', filterParams],
     queryFn: async () => {
-      const res = await api.get('/performance/hierarchy', { params: filterObj })
+      const res = await api.get('/performance/hierarchy', { params: filterParams })
       return res.data.data as HierarchyDepartment[]
     },
   })
@@ -656,7 +658,7 @@ export default function PerformanceManagement() {
       {/* Page Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Performance Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Performance</h1>
           <p className="text-sm text-gray-500 mt-1">
             Comprehensive view of employee performance, engagement, and organizational health
           </p>
@@ -670,6 +672,18 @@ export default function PerformanceManagement() {
           Export CSV
         </button>
       </div>
+
+      <PageFilterBar
+        department={department} setDepartment={setDepartment}
+        location={location} setLocation={setLocation}
+        timePeriod={timePeriod} setTimePeriod={setTimePeriod}
+        hasFilters={hasFilters} resetFilters={resetFilters}
+      />
+
+      <AIInsightsPanel
+        pageContext="Performance Management"
+        prompt="Analyse the performance management data including rating distributions, high and low performer percentages, engagement scores, review completion rates, and performance trends. Identify concerning patterns such as performance clustering, disengagement risk, or review coverage gaps. Provide 3-5 actionable recommendations for HR leadership."
+      />
 
       {/* Summary Cards */}
       {isLoading ? (

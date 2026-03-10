@@ -316,7 +316,7 @@ export const useStore = create<AppState>()(
         set((state) => ({ aiWidgetState: { ...state.aiWidgetState, ...aiState } })),
     }),
     {
-      name: 'hr-analytics-storage',
+      name: 'interface-storage',
       partialize: (state) => ({
         user: state.user,
         token: state.token,

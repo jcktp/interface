@@ -314,7 +314,7 @@ export default function DashboardBuilder() {
         )}
 
         {/* Dashboard Grid */}
-        <div className="flex-1 min-h-[600px] bg-gray-50 rounded-lg p-4">
+        <div className="flex-1 min-h-[600px] p-4">
           {localWidgets.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
               <Cog6ToothIcon className="w-12 h-12 mb-4 text-gray-300" />

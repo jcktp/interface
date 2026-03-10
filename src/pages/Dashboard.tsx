@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLocalization } from '../hooks/useLocalization'
-import { useGlobalFilters } from '../hooks/useGlobalFilters'
+import { usePageFilters } from '../hooks/usePageFilters'
 import { useDashboardMetrics, useFinancialMetrics } from '../hooks'
 import { useMLPrediction, useActiveModels, type MLPrediction } from '../hooks/useMLInsights'
 import { useStore } from '../store'
 import api from '../api'
 import { CHART_COLORS } from '../utils/chartColors'
+import { getDateRange } from '../utils/datePresets'
 import MetricCard from '../components/MetricCard'
 import MLInsightsBadge from '../components/MLInsightsBadge'
 import AreaChart from '../components/charts/AreaChart'
@@ -25,6 +26,8 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 import DataSourceSelector from '../components/DataSourceSelector'
+import AIInsightsPanel from '../components/AIInsightsPanel'
+import PageFilterBar from '../components/PageFilterBar'
 
 interface HealthSummary {
   headcount: number
@@ -75,7 +78,7 @@ function SkeletonTable() {
 
 export default function Dashboard() {
   const loc = useLocalization()
-  const { filterObj } = useGlobalFilters()
+  const { department, setDepartment, location, setLocation, timePeriod, setTimePeriod, filterParams, hasFilters, resetFilters } = usePageFilters()
   const { employees, requisitions } = useStore()
 
   // Data source state
@@ -85,13 +88,13 @@ export default function Dashboard() {
   const {
     data: dashboardData,
     isLoading: metricsLoading,
-  } = useDashboardMetrics()
+  } = useDashboardMetrics(filterParams)
 
   // Fetch financial & quality-of-hire metrics
   const {
     data: financialData,
     isLoading: financialLoading,
-  } = useFinancialMetrics()
+  } = useFinancialMetrics(filterParams)
 
   // Fetch health summary from /api/command-center/health
   const [healthData, setHealthData] = useState<HealthSummary | null>(null)
@@ -114,11 +117,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false
+    const params: Record<string, string> = {}
+    if (department) params.departments = department
+    if (location)   params.locations   = location
+    if (timePeriod && timePeriod !== 'all_time') {
+      const range = getDateRange(timePeriod)
+      if (range.start) params.start_date = range.start
+      if (range.end)   params.end_date   = range.end
+    }
 
     async function fetchHealth() {
       try {
         setHealthLoading(true)
-        const response = await api.get('/command-center/health', { params: filterObj })
+        const response = await api.get('/command-center/health', { params })
         if (!cancelled) {
           setHealthData(response.data?.data ?? response.data)
         }
@@ -132,7 +143,7 @@ export default function Dashboard() {
 
     fetchHealth()
     return () => { cancelled = true }
-  }, [filterObj])
+  }, [department, location, timePeriod])
 
   // Compute store-based metrics (used as primary source or fallback)
   const storeMetrics = useMemo(() => {
@@ -382,6 +393,18 @@ export default function Dashboard() {
         </div>
         <DataSourceSelector module="Dashboard" selectedSource={dataSource} onSourceChange={setDataSource} compact />
       </div>
+
+      <AIInsightsPanel
+        pageContext="Executive Dashboard"
+        prompt="Analyse the current workforce dashboard data including headcount, attrition rate, engagement score, performance ratings, and open positions. Provide 3-5 key insights, flag any concerning trends, and give actionable recommendations for the executive team."
+      />
+
+      <PageFilterBar
+        department={department} setDepartment={setDepartment}
+        location={location} setLocation={setLocation}
+        timePeriod={timePeriod} setTimePeriod={setTimePeriod}
+        hasFilters={hasFilters} resetFilters={resetFilters}
+      />
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

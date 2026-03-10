@@ -4,7 +4,8 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import toast from 'react-hot-toast'
 import api from '../api'
 import { getAttendancePolicy, updateAttendancePolicy } from '../api'
-import { useGlobalFilters } from '../hooks/useGlobalFilters'
+import { usePageFilters } from '../hooks/usePageFilters'
+import PageFilterBar from '../components/PageFilterBar'
 import { usePermissions } from '../hooks/usePermissions'
 import { CHART_COLORS, formatChartLabel } from '../utils/chartColors'
 import {
@@ -411,7 +412,7 @@ function ptoBg(value: number) {
 
 function WorkplacePolicySection() {
   const queryClient = useQueryClient()
-  const { filterObj } = useGlobalFilters()
+  const { filterParams } = usePageFilters()
 
   const { data: policyData, isLoading: policyLoading } = useQuery({
     queryKey: ['attendance-policy'],
@@ -420,8 +421,8 @@ function WorkplacePolicySection() {
   })
 
   const { data: complianceData, isLoading: complianceLoading } = useQuery({
-    queryKey: ['attendance-compliance-metrics', filterObj],
-    queryFn: () => api.get('/attendance/compliance', { params: filterObj }).then(r => r.data),
+    queryKey: ['attendance-compliance-metrics', filterParams],
+    queryFn: () => api.get('/attendance/compliance', { params: filterParams }).then(r => r.data),
     staleTime: 30000,
   })
 
@@ -464,10 +465,10 @@ function WorkplacePolicySection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Global Workplace Policy</h2>
-        {filterObj.locations && filterObj.locations.length > 0 && (
+        {filterParams.locations && filterParams.locations.length > 0 && (
           <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md border border-indigo-100 flex items-center gap-1.5">
             <GlobeAltIcon className="h-3 w-3" />
-            Filtered to: {filterObj.locations}
+            Filtered to: {filterParams.locations}
           </span>
         )}
       </div>
@@ -620,7 +621,7 @@ function WorkplacePolicySection() {
 
 export default function AttendanceMonitoring() {
   const { hasPermission } = usePermissions()
-  const { filterObj } = useGlobalFilters()
+  const { department, setDepartment, location, setLocation, timePeriod, setTimePeriod, filterParams, hasFilters, resetFilters } = usePageFilters()
   const [dataSource, setDataSource] = useState('live-api')
   const [summary, setSummary] = useState<any>(null)
   const [trends, setTrends] = useState<any[]>([])
@@ -634,10 +635,10 @@ export default function AttendanceMonitoring() {
     setHierarchyLoading(true)
     try {
       const [summRes, trendsRes, compRes, hierRes] = await Promise.all([
-        api.get('/attendance/summary', { params: filterObj }).catch(() => ({ data: null })),
-        api.get('/attendance/trends', { params: filterObj }).catch(() => ({ data: [] })),
-        api.get('/attendance/compliance', { params: filterObj }).catch(() => ({ data: [] })),
-        api.get('/attendance/hierarchy', { params: filterObj }).catch(() => ({ data: [] })),
+        api.get('/attendance/summary', { params: filterParams }).catch(() => ({ data: null })),
+        api.get('/attendance/trends', { params: filterParams }).catch(() => ({ data: [] })),
+        api.get('/attendance/compliance', { params: filterParams }).catch(() => ({ data: [] })),
+        api.get('/attendance/hierarchy', { params: filterParams }).catch(() => ({ data: [] })),
       ])
       setSummary(summRes.data)
       setTrends(Array.isArray(trendsRes.data) ? trendsRes.data : trendsRes.data?.trends || [])
@@ -649,7 +650,7 @@ export default function AttendanceMonitoring() {
       setLoading(false)
       setHierarchyLoading(false)
     }
-  }, [filterObj])
+  }, [department, location, timePeriod]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchData()
@@ -694,7 +695,7 @@ export default function AttendanceMonitoring() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Attendance Monitoring</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
           <p className="text-sm text-gray-500 mt-1">Track office attendance and compliance</p>
         </div>
         <div className="flex items-center gap-3">
@@ -711,6 +712,13 @@ export default function AttendanceMonitoring() {
           )}
         </div>
       </div>
+
+      <PageFilterBar
+        department={department} setDepartment={setDepartment}
+        location={location} setLocation={setLocation}
+        timePeriod={timePeriod} setTimePeriod={setTimePeriod}
+        hasFilters={hasFilters} resetFilters={resetFilters}
+      />
 
       {/* Workplace Policy Section */}
       <WorkplacePolicySection />

@@ -1,6 +1,9 @@
+from datetime import datetime
 from typing import Dict, Any, Optional
-from fastapi import APIRouter, Depends, Query
+from uuid import uuid4
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from database.connection import get_db
 from services.auth.security import verify_token, get_org_id
 from services.recruitment_service import RecruitmentService
@@ -120,11 +123,89 @@ async def list_goals(year: int = 2026, user=Depends(verify_token), db: Session =
 
 recruiter_router = APIRouter(prefix="/api", tags=["Recruiter"])
 
+def _goal_to_dict(goal) -> Dict[str, Any]:
+    return {
+        "id": str(goal.id),
+        "name": goal.name,
+        "seniority": goal.seniority,
+        "location": goal.location,
+        "manager": goal.manager,
+        "employment_type": goal.employment_type,
+        "q1_seniority": goal.q1_seniority,
+        "q2_seniority": goal.q2_seniority,
+        "q3_seniority": goal.q3_seniority,
+        "q4_seniority": goal.q4_seniority,
+        "q1_goal": goal.q1_goal or 0,
+        "q2_goal": goal.q2_goal or 0,
+        "q3_goal": goal.q3_goal or 0,
+        "q4_goal": goal.q4_goal or 0,
+        "q1_actual": goal.q1_actual or 0,
+        "q2_actual": goal.q2_actual or 0,
+        "q3_actual": goal.q3_actual or 0,
+        "q4_actual": goal.q4_actual or 0,
+        "monthly_capacity": goal.monthly_capacity or 4,
+        "utilization_pct": goal.utilization_pct or 85,
+        "specializations": goal.specializations,
+        "overhead_pct": goal.overhead_pct or 15,
+        "max_concurrent_reqs": goal.max_concurrent_reqs or 8,
+        "eligible_for_bonus": goal.eligible_for_bonus or False,
+        "bonus_notes": goal.bonus_notes,
+        "is_active": goal.is_active if goal.is_active is not None else True,
+        "year": goal.year,
+        "organization_id": str(goal.organization_id),
+    }
+
 @recruiter_router.get("/recruiter-goals")
 async def get_recruiter_goals(year: int = 2026, user=Depends(verify_token), db: Session = Depends(get_db)):
     from database.models import RecruiterGoal
     org_id = get_org_id(user)
-    return {"status": "success", "data": db.query(RecruiterGoal).filter(RecruiterGoal.organization_id == org_id, RecruiterGoal.year == year).all()}
+    goals = db.query(RecruiterGoal).filter(RecruiterGoal.organization_id == org_id, RecruiterGoal.year == year).all()
+    return {"status": "success", "data": [_goal_to_dict(g) for g in goals]}
+
+@recruiter_router.post("/recruiter-goals/auto-populate")
+async def auto_populate_recruiter_actuals(data: Dict[str, Any], user=Depends(verify_token), db: Session = Depends(get_db)):
+    from database.models import RecruiterGoal
+    org_id = get_org_id(user)
+    year = int(data.get("year", datetime.now().year))
+
+    # Count hires per recruiter per quarter using joined employee + recruiter name
+    result = db.execute(text("""
+        SELECT
+            r.first_name || ' ' || r.last_name AS recruiter_name,
+            EXTRACT(QUARTER FROM e.hire_date)::int AS quarter,
+            COUNT(*) AS hire_count
+        FROM employees e
+        JOIN employees r ON r.id = e.hired_by_id
+        WHERE e.organization_id = :org_id
+          AND EXTRACT(YEAR FROM e.hire_date) = :year
+          AND e.hired_by_id IS NOT NULL
+        GROUP BY recruiter_name, quarter
+    """), {"org_id": str(org_id), "year": year})
+
+    hire_map: Dict[str, Dict[int, int]] = {}
+    for row in result.fetchall():
+        name, quarter, count = row[0], int(row[1]), int(row[2])
+        if name not in hire_map:
+            hire_map[name] = {1: 0, 2: 0, 3: 0, 4: 0}
+        hire_map[name][quarter] = count
+
+    goals = db.query(RecruiterGoal).filter(
+        RecruiterGoal.organization_id == org_id,
+        RecruiterGoal.year == year
+    ).all()
+
+    updated = 0
+    for goal in goals:
+        if goal.name in hire_map:
+            counts = hire_map[goal.name]
+            goal.q1_actual = counts.get(1, 0)
+            goal.q2_actual = counts.get(2, 0)
+            goal.q3_actual = counts.get(3, 0)
+            goal.q4_actual = counts.get(4, 0)
+            updated += 1
+
+    db.commit()
+    return {"status": "success", "updated_count": updated}
 
 @recruiter_router.put("/recruiter-goals/{goal_id}")
 async def update_recruiter_goal(

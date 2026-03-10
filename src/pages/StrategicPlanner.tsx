@@ -157,7 +157,7 @@ export default function StrategicPlanner() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Full-Cycle Strategic Planner</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Strategic Planner</h1>
           <p className="text-sm text-gray-500 mt-1">Holistic workforce planning — inputs at each step flow through to execution and budget.</p>
         </div>
         <div className="flex items-center gap-2">

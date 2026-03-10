@@ -20,6 +20,11 @@ export interface WidgetConfig {
   sql_query?: string
   saved_query_id?: string
   department?: string
+  // Filters
+  time_period?: string          // e.g. 'this_month', 'last_quarter', 'last_12_months'
+  comparison?: string           // e.g. 'wow', 'mom', 'yoy', 'vs_target'
+  location?: string
+  job_level?: string
 }
 
 export interface DashboardLayout {

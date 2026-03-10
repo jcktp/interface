@@ -179,7 +179,7 @@ export default function WorkforcePlanningInteractive() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Workforce Planning & Forecasting</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Workforce Planning</h1>
           <p className="text-sm text-gray-500 mt-1">End-to-end scenario planning: from baseline demand to execution capacity and financial impact.</p>
         </div>
       </div>

@@ -1,24 +1,35 @@
 /**
- * Shared chart color palette — professional, cohesive, not monochromatic.
- * Uses a blue-to-teal-to-amber spectrum to avoid conflicting hues.
- * Order: navy, blue, teal, amber, slate, indigo
+ * Shared chart color palette — accessible, perceptually distinct categorical colors.
+ *
+ * Principles (per Atlassian data visualization guide):
+ *  - Vary hue AND lightness so colors remain distinguishable for colorblind users
+ *  - Avoid very dark colors (#0F172A) as primary data series — reserve for accents/backgrounds
+ *  - Reduce saturation on non-critical series to lower visual noise
+ *  - Use culturally meaningful colors for status (green = positive, red = negative)
+ *
+ * Palette order: blue → emerald → amber → violet → cyan → orange → pink → slate
  */
 export const CHART_COLORS = [
-  '#0F172A', // deep navy (primary)
-  '#2563EB', // blue-600
-  '#0D9488', // teal-600
-  '#D97706', // amber-600
-  '#475569', // slate-600
-  '#4F46E5', // indigo-600
+  '#3B82F6', // blue-500
+  '#10B981', // emerald-500
+  '#F59E0B', // amber-500
+  '#8B5CF6', // violet-500
+  '#06B6D4', // cyan-500
+  '#F97316', // orange-500
+  '#EC4899', // pink-500
+  '#6B7280', // gray-500
 ] as const
 
+/** Light/fill versions for area charts, backgrounds, tooltips */
 export const CHART_COLORS_LIGHT = [
   '#EFF6FF', // blue-50
-  '#F0FDFA', // teal-50
+  '#ECFDF5', // emerald-50
   '#FFFBEB', // amber-50
-  '#F1F5F9', // slate-100
-  '#EEF2FF', // indigo-50
-  '#F8FAFC', // slate-50
+  '#F5F3FF', // violet-50
+  '#ECFEFF', // cyan-50
+  '#FFF7ED', // orange-50
+  '#FDF2F8', // pink-50
+  '#F9FAFB', // gray-50
 ] as const
 
 /** Get a color by index, wrapping around if needed */
@@ -31,17 +42,54 @@ export function getChartColorLight(index: number): string {
   return CHART_COLORS_LIGHT[index % CHART_COLORS_LIGHT.length]
 }
 
-/** Named colors for specific use cases */
+/** Named colors for status/KPI use cases */
 export const STATUS_COLORS = {
-  positive: '#16a34a',
-  negative: '#dc2626',
-  neutral: '#475569',
-  warning: '#eab308',
-  info: '#7c6aad',
+  positive: '#10B981', // emerald-500 — growth, healthy
+  negative: '#EF4444', // red-500 — risk, declining
+  neutral:  '#6B7280', // gray-500 — unchanged
+  warning:  '#F59E0B', // amber-500 — needs attention
+  info:     '#3B82F6', // blue-500 — informational
 } as const
 
-/** Pie/donut chart palette — cohesive blues, teals, ambers */
-export const PIE_COLORS = ['#0F172A', '#2563EB', '#0D9488', '#D97706', '#4F46E5', '#475569', '#7C3AED', '#0891B2'] as const
+/**
+ * Pie / donut chart palette — 10 distinct hues with varying lightness.
+ * Colorblind-safe: Blue, Green, Amber, Violet, Cyan, Orange, Pink, Gray, Lime, Red
+ */
+export const PIE_COLORS = [
+  '#3B82F6', // blue-500
+  '#10B981', // emerald-500
+  '#F59E0B', // amber-500
+  '#8B5CF6', // violet-500
+  '#06B6D4', // cyan-500
+  '#F97316', // orange-500
+  '#EC4899', // pink-500
+  '#6B7280', // gray-500
+  '#84CC16', // lime-500
+  '#EF4444', // red-500
+] as const
+
+/**
+ * Sequential palette (single-hue blue) for continuous/ordered data.
+ * Lightest → Darkest, 5 steps.
+ */
+export const SEQUENTIAL_BLUE = [
+  '#DBEAFE', // blue-100
+  '#93C5FD', // blue-300
+  '#3B82F6', // blue-500
+  '#1D4ED8', // blue-700
+  '#1E3A8A', // blue-900
+] as const
+
+/**
+ * Diverging palette (red → neutral → blue) for data with a meaningful midpoint.
+ */
+export const DIVERGING_RB = [
+  '#EF4444', // red-500 (low / negative end)
+  '#FCA5A5', // red-300
+  '#E5E7EB', // gray-200 (neutral midpoint)
+  '#93C5FD', // blue-300
+  '#3B82F6', // blue-500 (high / positive end)
+] as const
 
 /**
  * Format a number into compact form (e.g. 1.2M, 85K).
