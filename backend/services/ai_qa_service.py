@@ -57,6 +57,7 @@ TABLE employees
   salary FLOAT, age INT, tenure FLOAT (years)
   performance_rating FLOAT (1–5), engagement_score FLOAT (0–100)
   manager_id UUID (nullable)
+  NOTE: there is NO review_date, last_review_date, or review column — do NOT use them
 
 TABLE job_requisitions
   id UUID, organization_id UUID, title VARCHAR
