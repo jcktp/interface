@@ -10,7 +10,7 @@ from sqlalchemy.pool import QueuePool
 # Database URL from environment
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/hr_analytics"
+    "postgresql://postgres:postgres@localhost:5432/interface"
 )
 
 # Create engine with connection pooling

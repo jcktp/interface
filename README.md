@@ -237,7 +237,7 @@ cp .env.example .env
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
 | `SECRET_KEY` | JWT signing secret | `your-secret-key-change-in-production` | Yes (change for production) |
-| `DATABASE_URL` | PostgreSQL connection | `postgresql://postgres:postgres@db:5432/hr_analytics` | Auto-configured |
+| `DATABASE_URL` | PostgreSQL connection | `postgresql://postgres:postgres@db:5432/interface` | Auto-configured |
 | `REDIS_URL` | Redis connection | `redis://redis:6379` | Auto-configured |
 | `OPENAI_API_KEY` | API key for the LLM provider (`ollama` for local, real key for cloud) | `ollama` | Optional |
 | `LLM_BASE_URL` | LLM provider base URL | `http://ollama:11434/v1` (local) | Optional |

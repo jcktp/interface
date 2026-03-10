@@ -19,7 +19,7 @@ async def restore_snapshot(user=Depends(verify_token)):
     try:
         # Use psql to execute the snapshot
         # Environment variables for PG are usually set in docker-compose
-        db_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/hr_analytics")
+        db_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/interface")
         
         # Command to restore: clear public schema and then run the SQL
         # We wrap it in a command that drops and recreates schema to ensure a clean slate

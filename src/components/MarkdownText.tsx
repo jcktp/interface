@@ -181,7 +181,7 @@ function renderTextBlocks(text: string, out: React.ReactNode[], gap: string, sta
     // Regular paragraph line — accumulate into paragraph
     flushList()
     const paraLines: string[] = []
-    while (i < lines.length && lines[i].trim() && !/^[#\-*]|\d+\./.test(lines[i].trim())) {
+    while (i < lines.length && lines[i].trim() && !/^#{1,3}\s|^[-*]\s|^\d+\.\s/.test(lines[i].trim())) {
       paraLines.push(lines[i].trim())
       i++
     }
