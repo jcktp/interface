@@ -16,9 +16,28 @@ services:
       - REDIS_URL=redis://redis:6379
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
       - ML_MODELS_PATH=/app/backend/models
-      - OPENAI_API_KEY=ollama
-      - LLM_BASE_URL=http://ollama:11434/v1
-      - LLM_MODEL=llama3.2:1b
+      # ── AI Provider ──────────────────────────────────────────────────────
+      # Default: local Ollama (no API key required, slower on CPU-only machines)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-ollama}
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://ollama:11434/v1}
+      - LLM_MODEL=${LLM_MODEL:-llama3.2:1b}
+      #
+      # ── Fast cloud alternatives (set these in .env) ───────────────────────
+      # Groq (free tier, ~1s response)
+      #   OPENAI_API_KEY=gsk_...
+      #   LLM_BASE_URL=https://api.groq.com/openai/v1
+      #   LLM_MODEL=llama-3.1-8b-instant
+      #
+      # Mistral (open-mistral-nemo, fast + cheap)
+      #   OPENAI_API_KEY=<mistral-api-key>
+      #   LLM_BASE_URL=https://api.mistral.ai/v1
+      #   LLM_MODEL=open-mistral-nemo
+      #
+      # OpenAI (gpt-4o-mini, reliable)
+      #   OPENAI_API_KEY=sk-...
+      #   LLM_BASE_URL=https://api.openai.com/v1
+      #   LLM_MODEL=gpt-4o-mini
+      # ─────────────────────────────────────────────────────────────────────
     volumes:
       - ./data:/app/data
       - ml-models:/app/backend/models
@@ -33,7 +52,8 @@ services:
       timeout: 10s
       retries: 3
 
-  # Lightweight LLM Server
+  # Local LLM Server (used when LLM_BASE_URL points to Ollama)
+  # Tip: switch to Groq/Mistral/OpenAI in .env for much faster responses
   ollama:
     image: ollama/ollama:latest
     ports:
@@ -41,6 +61,8 @@ services:
     volumes:
       - ollama-data:/root/.ollama
     restart: unless-stopped
+    cpus: '2'
+    mem_limit: 4g
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s

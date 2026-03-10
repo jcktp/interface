@@ -125,6 +125,43 @@ Once the app is running, log in with the default admin account:
 | **Email** | `admin@interface.app` |
 | **Password** | `admin123` |
 
+### AI Provider Configuration
+
+By default, the AI assistant uses a local Ollama instance running `llama3.2:1b`. This works offline but runs on CPU and can be slow. For instant responses, switch to a cloud provider by adding three lines to a `.env` file in the project root:
+
+**Groq (recommended — free, ~1s response)**
+```bash
+OPENAI_API_KEY=gsk_...       # Get at console.groq.com
+LLM_BASE_URL=https://api.groq.com/openai/v1
+LLM_MODEL=llama-3.1-8b-instant
+```
+
+**Mistral (open-mistral-nemo)**
+```bash
+OPENAI_API_KEY=<mistral-key>  # Get at console.mistral.ai
+LLM_BASE_URL=https://api.mistral.ai/v1
+LLM_MODEL=open-mistral-nemo
+```
+
+**OpenAI (gpt-4o-mini)**
+```bash
+OPENAI_API_KEY=sk-...
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4o-mini
+```
+
+Then restart the app container:
+```bash
+docker compose up -d app
+```
+
+When using a cloud provider, the `ollama` service still starts but is not used. You can skip it entirely with:
+```bash
+docker compose up -d app db redis
+```
+
+---
+
 ### Loading the Mock Database
 
 After logging in:
@@ -202,9 +239,9 @@ cp .env.example .env
 | `SECRET_KEY` | JWT signing secret | `your-secret-key-change-in-production` | Yes (change for production) |
 | `DATABASE_URL` | PostgreSQL connection | `postgresql://postgres:postgres@db:5432/hr_analytics` | Auto-configured |
 | `REDIS_URL` | Redis connection | `redis://redis:6379` | Auto-configured |
-| `OPENAI_API_KEY` | OpenAI key for AI Q&A | None | Optional |
-| `LLM_BASE_URL` | LLM API base URL | `https://api.openai.com/v1` | Optional |
-| `LLM_MODEL` | LLM model name | `gpt-4o` | Optional |
+| `OPENAI_API_KEY` | API key for the LLM provider (`ollama` for local, real key for cloud) | `ollama` | Optional |
+| `LLM_BASE_URL` | LLM provider base URL | `http://ollama:11434/v1` (local) | Optional |
+| `LLM_MODEL` | Model name to use | `llama3.2:1b` (local) | Optional |
 | `SLACK_BOT_TOKEN` | Slack bot OAuth token | None | Optional |
 | `SLACK_SIGNING_SECRET` | Slack signing secret | None | Optional |
 | `SLACK_APP_TOKEN` | Slack app-level token | None | Optional |
@@ -442,7 +479,7 @@ Everything is self-contained — no dependencies beyond Docker.
 2. **Database**: Point `DATABASE_URL` to a managed PostgreSQL (RDS, Cloud SQL, etc.)
 3. **Redis**: Point `REDIS_URL` to a managed Redis (ElastiCache, Memorystore, etc.)
 4. **SSL**: Configure Nginx with SSL certificates or use a load balancer
-5. **AI Features**: Set `OPENAI_API_KEY` for natural language Q&A
+5. **AI Features**: Set `OPENAI_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL` — see [AI Provider Configuration](#ai-provider-configuration)
 6. **Monitoring**: Application logs go to stdout, compatible with any log aggregator
 
 ```bash
