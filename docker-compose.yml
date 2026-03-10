@@ -20,7 +20,7 @@ services:
       # Default: local Ollama (no API key required, slower on CPU-only machines)
       - OPENAI_API_KEY=${OPENAI_API_KEY:-ollama}
       - LLM_BASE_URL=${LLM_BASE_URL:-http://ollama:11434/v1}
-      - LLM_MODEL=${LLM_MODEL:-llama3.2:1b}
+      - LLM_MODEL=${LLM_MODEL:-qwen3:0.6b}
       #
       # ── Fast cloud alternatives (set these in .env) ───────────────────────
       # Groq (free tier, ~1s response)
@@ -72,7 +72,7 @@ services:
   # Pulls the model automatically on startup
   ollama-pull:
     image: curlimages/curl:latest
-    command: "curl -X POST http://ollama:11434/api/pull -d '{\"name\":\"llama3.2:1b\"}'"
+    command: "curl -X POST http://ollama:11434/api/pull -d '{\"name\":\"qwen3:0.6b\"}'"
     depends_on:
       ollama:
         condition: service_healthy
