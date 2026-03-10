@@ -97,47 +97,22 @@ A comprehensive, AI-powered workforce intelligence platform. Combines people ana
 
 ### Prerequisites
 
-- **macOS/Linux**: [Colima](https://github.com/abresber/colima) (lightweight Docker runtime) OR Docker Desktop
-- **Docker Engine** 24.0+
-- **Docker Compose** v2.20+
+- **Docker Desktop** 4.0+ (or Docker Engine 24.0+ with Docker Compose v2.20+)
 
-### Option 1: Colima + Docker (Recommended for macOS)
-
-Colima is a free, lightweight alternative to Docker Desktop that runs containers via a Linux VM.
+### Quick Start
 
 ```bash
-# 1. Install Colima and Docker CLI (macOS)
-brew install colima docker docker-compose
-
-# 2. Start Colima with enough resources
-colima start --cpu 4 --memory 6 --disk 60
-
-# 3. Navigate to the project folder
+# 1. Clone the repo
+git clone https://github.com/jcktp/interface.git
 cd interface
 
-# 4. Build and start all services
+# 2. Build and start all services
 docker compose up --build -d
 
-# 5. Wait for containers to be healthy (~30-60 seconds)
+# 3. Wait for containers to be healthy (~30-60 seconds)
 docker compose ps
 
-# 6. Open the application
-open http://localhost:3000
-```
-
-### Option 2: Docker Desktop
-
-```bash
-# 1. Install Docker Desktop from https://www.docker.com/products/docker-desktop
-# 2. Make sure Docker Desktop is running
-
-# 3. Navigate to the project folder
-cd interface
-
-# 4. Build and start all services
-docker compose up --build -d
-
-# 5. Open the application
+# 4. Open the application
 open http://localhost:3000
 ```
 
@@ -443,31 +418,21 @@ docker compose --profile slack up -d
 
 ---
 
-## Portable Setup (Move to Another Machine)
-
-To run this project on a different machine:
+## Setup on Another Machine
 
 ```bash
-# 1. Copy the entire project folder to the new machine
-#    (via USB, zip, rsync, scp, etc.)
-
-# 2. On the new machine, install Colima + Docker
-brew install colima docker docker-compose
-
-# 3. Start Colima
-colima start --cpu 4 --memory 6 --disk 60
-
-# 4. Navigate into the project
+# 1. Clone the repo
+git clone https://github.com/jcktp/interface.git
 cd interface
 
-# 5. Build and run
+# 2. Build and run
 docker compose up --build -d
 
-# 6. Open in browser
+# 3. Open in browser
 open http://localhost:3000
 ```
 
-Everything is self-contained. No external dependencies are required beyond Docker.
+Everything is self-contained — no dependencies beyond Docker.
 
 ---
 
