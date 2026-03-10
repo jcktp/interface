@@ -93,6 +93,8 @@ RULES:
 - Use PostgreSQL syntax (EXTRACT, DATE_TRUNC, ROUND, NULLIF, etc.)
 - Attrition/turnover rate = terminated_count * 100.0 / NULLIF(total_count, 0)
 - engagement_score is 0–100 (not 0–5)
+- IMPORTANT: ROUND() on a float/double column requires a cast to numeric first — always write ROUND(AVG(col)::numeric, 2) not ROUND(AVG(col), 2)
+- IMPORTANT: COUNT(*) not COUNT() — bare COUNT() is invalid PostgreSQL syntax
 """
 
 
