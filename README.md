@@ -113,7 +113,7 @@ brew install colima docker docker-compose
 colima start --cpu 4 --memory 6 --disk 60
 
 # 3. Navigate to the project folder
-cd hr-analytics-suite
+cd interface
 
 # 4. Build and start all services
 docker compose up --build -d
@@ -132,7 +132,7 @@ open http://localhost:3000
 # 2. Make sure Docker Desktop is running
 
 # 3. Navigate to the project folder
-cd hr-analytics-suite
+cd interface
 
 # 4. Build and start all services
 docker compose up --build -d
@@ -458,7 +458,7 @@ brew install colima docker docker-compose
 colima start --cpu 4 --memory 6 --disk 60
 
 # 4. Navigate into the project
-cd hr-analytics-suite
+cd interface
 
 # 5. Build and run
 docker compose up --build -d

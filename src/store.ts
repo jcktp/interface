@@ -436,7 +436,7 @@ export const useStore = create<AppState>()(
       },
     }),
     {
-      name: 'hr-analytics-storage',
+      name: 'interface-storage',
       // Only persist auth, UI preferences, and localization — not large data arrays
       partialize: (state) => ({
         user: state.user,

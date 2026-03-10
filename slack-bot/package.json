@@ -1,5 +1,5 @@
 {
-  "name": "hr-analytics-slack-bot",
+  "name": "interface-slack-bot",
   "version": "1.0.0",
   "description": "Slack bot for Interface",
   "main": "src/index.js",

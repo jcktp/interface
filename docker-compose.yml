@@ -131,4 +131,4 @@ volumes:
 
 networks:
   default:
-    name: hr-analytics-network
+    name: interface-network

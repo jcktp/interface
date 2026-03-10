@@ -10,7 +10,7 @@
 ```bash
 # Clone and start
 git clone <repo>
-cd interface-gemini
+cd interface
 
 # Build and start all services
 docker-compose up --build
