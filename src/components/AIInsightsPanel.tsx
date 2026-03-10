@@ -1,22 +1,16 @@
 /**
  * AIInsightsPanel — per-page AI analysis button + results panel.
- *
- * Usage:
- *   <AIInsightsPanel
- *     pageContext="Recruitment pipeline"
- *     prompt="Analyse the current recruitment pipeline data and provide key insights, bottlenecks, and actionable recommendations."
- *   />
  */
-import { useState } from 'react'
-import { SparklesIcon, ChevronDownIcon, ChevronUpIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { useState, useRef, useEffect } from 'react'
+import { SparklesIcon, ChevronDownIcon, ChevronUpIcon, XMarkIcon, StopIcon } from '@heroicons/react/24/outline'
 import api from '../api'
 import MarkdownText from './MarkdownText'
 import { usePermissions } from '../hooks/usePermissions'
 import clsx from 'clsx'
 
 interface Props {
-  pageContext: string   // Short label, e.g. "Recruitment"
-  prompt: string        // The question sent to the AI
+  pageContext: string
+  prompt: string
   className?: string
 }
 
@@ -28,11 +22,26 @@ export default function AIInsightsPanel({ pageContext, prompt, className = '' }:
   const [insight, setInsight] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(true)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const [elapsed, setElapsed] = useState(0)
+  const abortRef = useRef<AbortController | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const canUseAI = hasPermission('ai_qa:use')
 
+  // Tick elapsed seconds while loading
+  useEffect(() => {
+    if (status === 'loading') {
+      setElapsed(0)
+      timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [status])
+
   const generate = async () => {
     if (!canUseAI || status === 'loading') return
+    abortRef.current = new AbortController()
     setStatus('loading')
     setInsight(null)
     setExpanded(true)
@@ -40,15 +49,29 @@ export default function AIInsightsPanel({ pageContext, prompt, className = '' }:
       const res = await api.post('/ai/ask', {
         question: prompt,
         conversation_id: conversationId ?? undefined,
-      }, { timeout: 90000 })
+      }, {
+        timeout: 120000,
+        signal: abortRef.current.signal,
+      })
       const { answer, conversation_id } = res.data.data
       setInsight(answer || 'No insights available.')
       setConversationId(conversation_id)
       setStatus('done')
     } catch (err: any) {
+      if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError' || err?.name === 'AbortError') {
+        setInsight(null)
+        setStatus('idle')
+        return
+      }
       setInsight(err?.response?.data?.detail || 'Failed to generate insights. Please try again.')
       setStatus('error')
     }
+  }
+
+  const cancel = () => {
+    abortRef.current?.abort()
+    setStatus('idle')
+    setInsight(null)
   }
 
   const dismiss = () => {
@@ -70,7 +93,10 @@ export default function AIInsightsPanel({ pageContext, prompt, className = '' }:
               <p className="text-xs text-gray-500 dark:text-gray-400">Generate AI-powered analysis of this page's data</p>
             )}
             {status === 'loading' && (
-              <p className="text-xs text-blue-600 dark:text-blue-400 animate-pulse">Analysing data…</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                Analysing data… <span className="tabular-nums">{elapsed}s</span>
+                {elapsed >= 15 && <span className="text-blue-400 dark:text-blue-500"> — model is warming up</span>}
+              </p>
             )}
             {status === 'done' && (
               <p className="text-xs text-gray-500 dark:text-gray-400">Click Regenerate to refresh</p>
@@ -89,14 +115,24 @@ export default function AIInsightsPanel({ pageContext, prompt, className = '' }:
             </button>
           )}
           {status === 'loading' && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" />
+            <>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <div className="flex gap-1">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" />
+                </div>
+                <span className="text-xs text-blue-600 dark:text-blue-400">Thinking…</span>
               </div>
-              <span className="text-xs text-blue-600 dark:text-blue-400">Thinking…</span>
-            </div>
+              <button
+                onClick={cancel}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-xs font-medium rounded-lg hover:border-red-300 hover:text-red-600 transition-colors"
+                title="Cancel"
+              >
+                <StopIcon className="h-3.5 w-3.5" />
+                Cancel
+              </button>
+            </>
           )}
           {(status === 'done' || status === 'error') && (
             <>
