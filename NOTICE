@@ -1,0 +1,4 @@
+Interface retains the name, logo geometry and visual language of jcktp/interface
+at the repository owner's request. The logo is adapted from src/components/Logo.tsx
+at commit a6ac2237d281e45cd5f733e5e24c10920e06a4fd.
+The backend, browser behavior and lightweight packaging are newly implemented.

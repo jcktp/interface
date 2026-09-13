@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Interface</title><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" type="module"></script></head>
+<body>
+<aside class="sidebar"><a class="brand" href="/"><img src="/static/logo.svg" alt="" width="32" height="32">interface</a><p class="nav-label">WORKSPACE</p><nav aria-label="Main"><a class="nav-active" href="/" aria-current="page"><span aria-hidden="true">◉</span> People</a></nav><div class="sidebar-bottom">Your people. Connected.</div></aside>
+<header><span>Workspace <span class="divider">/</span> <strong>People</strong></span><button id="logout" class="secondary" hidden>Lock directory</button></header>
+<main>
+<section id="access"><img src="/static/logo.svg" alt="" width="40" height="40"><h1>Welcome to interface</h1><p>Your people and workflows, in one place.</p><form id="login"><label for="key">Access key</label><input id="key" type="password" required autocomplete="off"><button>Open directory</button></form><p class="muted">Local preview · use a reader or administrator key from your data folder.</p></section>
+<section id="directory" hidden>
+<div class="heading"><div><p class="eyebrow">PEOPLE MANAGEMENT</p><h1>Employee directory</h1><p id="count">Loading…</p></div><button id="add" hidden>+ Add person</button></div>
+<form id="search"><label class="sr-only" for="query">Search people</label><input id="query" type="search" maxlength="120" placeholder="Search name, email, or department"><button class="secondary">Search</button></form>
+<div id="empty" hidden><h2>A directory starts with one person.</h2><p id="empty-text">Add your first colleague to get started.</p></div>
+<div class="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="pager"><button id="previous" class="secondary">Previous</button><span id="page"></span><button id="next" class="secondary">Next</button></div>
+</section>
+<p id="message" role="status" aria-live="polite"></p>
+</main>
+<dialog id="editor"><form id="person-form"><div class="heading"><h2 id="editor-title">Add person</h2><button type="button" id="cancel" class="secondary">Cancel</button></div><label for="name">Full name</label><input name="name" id="name" required maxlength="120"><label for="email">Work email</label><input name="email" id="email" type="email" required maxlength="254"><label for="title">Job title</label><input name="title" id="title" maxlength="120"><label for="department">Department</label><input name="department" id="department" maxlength="120"><label for="status">Status</label><select id="status" name="status"><option value="active">Active</option><option value="inactive">Inactive</option></select><p id="form-message" role="alert"></p><button id="save">Save person</button></form></dialog>
+<footer>Interface · Local preview <a href="/docs">API reference</a></footer>
+</body></html>
