@@ -43,12 +43,14 @@ class SQLitePeopleRepository:
                     changed = [key for key, value in values.items() if old[key] != value]
                     if not changed:
                         return dict(old)
-                    db.execute("UPDATE people SET name=:name, email=:email, title=:title, department=:department, status=:status, version=version+1, updated_at=:now WHERE id=:id", dict(values, now=now, id=person_id))
+                    db.execute("UPDATE people SET name=:name, email=:email, title=:title, department=:department, preferred_name=:preferred_name, status=:status, version=version+1, updated_at=:now WHERE id=:id", dict(values, now=now, id=person_id))
+                    if values['status'] == 'inactive':
+                        db.execute('DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE person_id=?)', (person_id,))
                     event = "person.updated.v1"
                 else:
                     person_id = str(uuid4())
                     changed = list(values)
-                    db.execute("INSERT INTO people (id,name,email,title,department,status,created_at,updated_at) VALUES (:id,:name,:email,:title,:department,:status,:now,:now)", dict(values, id=person_id, now=now))
+                    db.execute("INSERT INTO people (id,name,email,title,department,preferred_name,status,created_at,updated_at) VALUES (:id,:name,:email,:title,:department,:preferred_name,:status,:now,:now)", dict(values, id=person_id, now=now))
                     event = "person.created.v1"
                 db.execute("INSERT INTO events(type,person_id,actor,occurred_at,changed_fields) VALUES (?,?,?,?,?)", (event, person_id, actor.name, now, json.dumps(changed)))
                 return dict(db.execute("SELECT * FROM people WHERE id=?", (person_id,)).fetchone())

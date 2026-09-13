@@ -19,7 +19,7 @@ def main():
         db.migrate()
         migration_ms = (perf_counter() - start) * 1000
         with db.connect() as connection:
-            connection.executemany('INSERT INTO people VALUES (?,?,?,?,?,?,1,?,?)',
+            connection.executemany('INSERT INTO people(id,name,email,title,department,status,version,created_at,updated_at) VALUES (?,?,?,?,?,?,1,?,?)',
                 [(str(i), f'Person {i:05}', f'p{i}@example.test', 'Engineer', 'Engineering' if i % 2 else 'People', 'active', '2026-01-01', '2026-01-01') for i in range(4500)])
         service = PeopleService(SQLitePeopleRepository(db))
         headers = {'Authorization': 'Bearer ' + 'r' * 40}

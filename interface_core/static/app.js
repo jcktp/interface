@@ -1,10 +1,14 @@
 import {ApiClient} from './api.js';
+import {WorkspaceViews} from './views.js';
 const el = id => document.getElementById(id);
 
 class DirectoryApp {
   constructor(api) {
     this.api = api;
     this.role = ''; this.offset = 0; this.editing = null; this.requestVersion = 0;
+    this.current = {}; this.workspace = new WorkspaceViews(api, this.current, () => this.lock());
+    document.querySelectorAll('[data-view]').forEach(button => button.onclick = () => this.navigate(button.dataset.view));
+    el('signin').onsubmit = event => this.signin(event);
     el('login').onsubmit = event => this.login(event);
     el('logout').onclick = () => this.lock();
     el('search').onsubmit = event => { event.preventDefault(); this.offset = 0; this.load().catch(error => this.message(error)); };
@@ -18,14 +22,40 @@ class DirectoryApp {
   async login(event) {
     event.preventDefault(); this.api.unlock(el('key').value); el('message').textContent = '';
     try {
-      this.role = (await this.api.request('/me')).role;
+      await this.finishLogin();
       this.offset = 0;
       await this.load();
       el('key').value = ''; el('access').hidden = true; el('directory').hidden = false;
       el('logout').hidden = false; el('add').hidden = this.role !== 'admin';
     } catch (error) { this.api.lock(); this.message(error); }
   }
-  lock() {
+  async finishLogin() {
+    this.current = await this.api.request('/me'); this.role = this.current.role; this.workspace.current = this.current;
+    document.querySelectorAll('[data-view]').forEach(button => {
+      const view = button.dataset.view;
+      button.hidden = view === 'directory' ? false : view === 'profile' ? !this.current.person_id : ['leave','tasks'].includes(view) ? this.role === 'reader' : this.role !== 'admin';
+    });
+  }
+  async signin(event) {
+    event.preventDefault(); el('message').textContent = '';
+    try {
+      const result = await this.api.request('/auth/login', {method:'POST',body:JSON.stringify({email:el('login-email').value,password:el('login-password').value})});
+      this.api.unlock(result.access_token); el('login-password').value = ''; await this.finishLogin();
+      el('access').hidden = true; el('logout').hidden = false; el('add').hidden = this.role !== 'admin';
+      await this.navigate(this.current.person_id ? 'profile' : 'directory');
+    } catch(error) { this.api.lock(); this.message(error); }
+  }
+  async navigate(view) {
+    document.querySelectorAll('[data-view]').forEach(button => button.classList.toggle('nav-active',button.dataset.view === view));
+    el('page-title').textContent = {directory:'People',profile:'My profile',leave:'Time off',tasks:'Onboarding',insights:'Insights & planning',accounts:'Accounts',connectors:'Connectors'}[view] || 'Employment';
+    el('directory').hidden = view !== 'directory'; el('workspace').hidden = view === 'directory';
+    if(view === 'directory') { this.workspace.clear(); try { await this.load(); } catch(error) { this.message(error); } }
+    else await this.workspace.show(view);
+  }
+  async lock() {
+    try { await this.api.request('/auth/logout',{method:'POST'}); } catch(error) { /* Local access keys do not create sessions. */ }
+    this.workspace.clear(); el('workspace').hidden = true;
+    document.querySelectorAll('[data-view]').forEach(button => button.hidden = button.dataset.view !== 'directory');
     this.requestVersion++; this.api.lock(); this.role = ''; this.editing = null;
     el('rows').replaceChildren(); el('person-form').reset(); el('editor').close();
     el('directory').hidden = true; el('access').hidden = false; el('logout').hidden = true;
@@ -58,13 +88,14 @@ class DirectoryApp {
     if (this.role === 'admin') {
       const edit = document.createElement('button'); edit.className = 'secondary'; edit.textContent = 'Edit';
       edit.setAttribute('aria-label', 'Edit ' + person.name); edit.onclick = () => this.openEditor(person); actions.append(edit);
+      const employment = document.createElement('button'); employment.className = 'secondary'; employment.textContent = 'Employment'; employment.onclick = async () => { el('directory').hidden = true; el('workspace').hidden = false; await this.workspace.employment(person); }; actions.append(employment);
     }
     row.append(actions); return row;
   }
   openEditor(person = null) {
     this.editing = person; el('person-form').reset(); el('form-message').textContent = '';
     el('editor-title').textContent = person ? 'Edit person' : 'Add person';
-    if (person) for (const field of ['name', 'email', 'title', 'department', 'status']) el(field).value = person[field];
+    if (person) for (const field of ['name', 'email', 'title', 'department', 'preferred_name', 'status']) el(field).value = person[field];
     el('editor').showModal();
   }
   async save(event) {

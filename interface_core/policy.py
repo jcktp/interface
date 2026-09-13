@@ -5,7 +5,8 @@ from typing import Literal
 @dataclass(frozen=True)
 class Actor:
     name: str
-    role: Literal["reader", "admin"]
+    role: Literal["reader", "admin", "employee"]
+    person_id: str | None = None
 
 
 class DomainError(Exception):
@@ -16,5 +17,5 @@ class DomainError(Exception):
 
 class DirectoryPolicy:
     def authorize(self, actor: Actor, write=False):
-        if actor.role not in ("reader", "admin") or (write and actor.role != "admin"):
+        if actor.role not in ("reader", "admin", "employee") or (write and actor.role != "admin"):
             raise DomainError(403, "This action requires an administrator")

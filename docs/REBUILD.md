@@ -45,7 +45,7 @@ The goal is therefore a product refocus as much as a deployment refactor.
 | Startup combines create_all with automatic column/index patches despite Alembic files | [backend/database/connection.py](https://github.com/jcktp/interface/blob/a6ac2237d281e45cd5f733e5e24c10920e06a4fd/backend/database/connection.py) | One versioned migration path; fail visibly on migration failure |
 | Provider abstraction covers transformation, pagination, retries and sync results | [provider_base.py](https://github.com/jcktp/interface/blob/a6ac2237d281e45cd5f733e5e24c10920e06a4fd/backend/services/integrations/provider_base.py) | Retain the adapter concept, narrow to capabilities each provider supports |
 | Sync employee CRUD calls omit organization arguments now required by CRUD; credential decryption is marked placeholder | [sync_service.py](https://github.com/jcktp/interface/blob/a6ac2237d281e45cd5f733e5e24c10920e06a4fd/backend/services/integrations/sync_service.py) | Rebuild one verified connector with contract tests; do not assume provider count equals readiness |
-| README labels source proprietary | [README.md](https://github.com/jcktp/interface/blob/a6ac2237d281e45cd5f733e5e24c10920e06a4fd/README.md) | New code has an explicit MIT license; assess rights before copying old assets/code |
+| README labels source proprietary | [README.md](https://github.com/jcktp/interface/blob/a6ac2237d281e45cd5f733e5e24c10920e06a4fd/README.md) | Current release uses BSL 1.1; earlier MIT release remains in history |
 
 ## What to carry forward
 
@@ -110,78 +110,29 @@ Decisions:
   For outgoing webhooks add a durable delivery table, signatures, bounded retries,
   replay tooling and idempotent consumers; don't send network calls inside transactions.
 
-## Incremental rebuild plan
+## Current progress and next steps
 
-Each step has a user-visible result and a stopping criterion. Do not recreate all
-old features before letting someone use it.
+The functional 0.2 release goes beyond the first directory slice. See the root README
+for setup and the exact implemented feature table.
 
-1. **Directory core — implemented here.** Empty startup, add/edit/inactivate person,
-   search, pagination, reader/admin policies, OpenAPI, SQLite migration, conflict
-   checks, transaction-bound events, empty initialization, backup, optional MCP search.
-   Done when restart preserves records; bad fields, duplicate emails, stale edits
-   and unauthorized writes are rejected; event failure rolls back the write.
+- Implemented: named accounts and self-service, leave request/approval/cancellation,
+  onboarding tasks, employment dates/previous company, tenure and per-employee financial
+  metrics, editable workforce cost scenarios, and connector adapters for Greenhouse
+  candidate import and Slack credential verification.
+- Preserved: Interface branding, modular OOP, no seed/demo loader, one process,
+  explicit policies, typed APIs and atomic journals.
+- Next identity work: OIDC/Okta, Google Workspace, invitation/recovery, MFA and better
+  account linking. These precede a broad enterprise deployment claim.
+- Next HR work: organization hierarchy, full employment histories/rehire intervals,
+  leave balances/calendars and notification delivery.
+- Next insights work: departmental plans, hiring ramps, attrition assumptions,
+  fiscal-period comparisons, richer recruitment and workforce analytics. The original
+  planning/insights product direction remains in scope as separate modules.
+- Next integrations: Ashby, Lever, SmartRecruiters, payroll exchange, Jira, Confluence,
+  AI-provider adapters and permission-aware MCP workflow tools. See CONNECTORS.md.
 
-2. **Named identity and employee self-service — next.** Add user-to-person mapping,
-   one supported login method, revocable sessions, HR admin and employee policies.
-   Employee home is “My profile” and “My requests”; administrative controls are
-   separate. Employees can edit only explicit fields such as preferred name; job,
-   manager and employment status remain HR-managed. Add organizations/settings for
-   the single deployment, then teams and a manager relationship with cycle checks.
-   Done when two employees cannot edit one another, cannot elevate their own role,
-   and every change identifies an individual actor. Required before a real team pilot.
+## Licensing
 
-3. **Reliable import/export and employment history.** CSV preview with row errors,
-   dry run, stable external IDs, duplicate/conflict policy and repeatable upserts.
-   Separate a person from their employment assignment so rehires and job changes
-   do not overwrite history. Capture effective dates, location and employment type.
-   Start with plain CSV export; handle spreadsheet formula injection in exported
-   text. Done when importing the same file twice produces no duplicates and a
-   failed row has a clear outcome. Port only selected directory data from Interface;
-   preserve a source-ID mapping. Never migrate seeded demo rows as real staff.
-
-4. **One useful workflow: leave requests.** Explicit requested → approved/rejected →
-   cancelled transitions, named approver, authorization, dates/timezone semantics,
-   overlapping-request checks and an event history. Begin without payroll accrual
-   calculations. Employee sees status and next action; approver sees an inbox.
-   Done when repeated approval is safe and an employee cannot approve their own
-   request. This proves workflow rails without a generic flow-builder UI.
-
-5. **Extension contract and one integration.** Add scoped revocable API keys,
-   versioned webhooks with a durable outbox, per-consumer delivery state, and one
-   real connector (choose the first pilot customer's system). Define record ownership
-   and conflict handling between manual edits and sync. Add a generated TypeScript
-   client if needed. Done when an integration can restart/replay without duplicates
-   and exposes useful failures without leaking credentials.
-
-6. **MCP workflow tools.** Extend beyond directory search with `get_my_profile`,
-   `request_leave` and `get_request_status`, bound to a named authenticated actor.
-   Add idempotency keys and confirmation in the consuming client for consequential
-   writes. Never expose raw SQL, unrestricted field changes or a shared superuser
-   identity. Done when the same permission tests pass through UI, HTTP and MCP.
-   Introduce remote transport only with an explicit authentication design.
-
-7. **Deployment and contributor polish.** Reproducible release dependencies,
-   install/upgrade/backup/restore tests, supported runtime matrix, one optional
-   container, HTTPS deployment guide, rate limits, session hardening, CI, contribution
-   guide and a tiny extension example. Avoid mandatory telemetry. Done when a fresh
-   machine runs a clean instance and upgrades it without losing data, and a second
-   developer adds an operation without modifying unrelated domains.
-
-8. **Only then add demand-led modules.** Onboarding checklists, document
-   acknowledgments, simple time-off balances, or basic headcount reports. Keep
-   compensation and private documents in restricted modules. Measure completed
-   employee tasks and support burden before adding analytics or another integration.
-
-## First-slice boundaries
-
-This is a running starter repository, not feature parity with Interface. There are
-no employee accounts, payroll, leave workflow, invitation emails, org chart,
-employment history, CSV import, webhook delivery, remote MCP, SaaS tenancy, SSO,
-or public hosting yet. No production-readiness claim is made. The simple local keys
-do not expire and the event journal records role labels instead of individual users;
-milestone 2 replaces that arrangement. The API intentionally has no permanent delete.
-
-The rebuilt application replaces the old files at the repository root on a rebuild
-branch. The old application remains in Git history. Domain code is new; the Interface
-logo geometry and design language are retained at the owner’s request. There is no
-seed or demo loader. MIT is the starter license for the new implementation.
+The 0.2 release uses BSL 1.1, with Jorick Polderman as licensor, free internal production
+use, a restriction on third-party hosted services, and an Apache 2.0 change date of
+September 13, 2030. It is source-available. The earlier MIT release remains in history.

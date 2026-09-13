@@ -1,7 +1,7 @@
 """Application service. All adapters enter through this policy boundary."""
 from typing import Protocol
 
-from .models import PersonInput
+from .models import PersonInput, PersonUpdate, SelfProfileUpdate
 from .policy import Actor, DirectoryPolicy, DomainError
 
 
@@ -40,3 +40,15 @@ class PeopleService:
 
     def health(self) -> None:
         self.repository.health()
+
+    def my_profile(self, actor: Actor) -> dict:
+        self.policy.authorize(actor)
+        if not actor.person_id:
+            raise DomainError(403, "Sign in with a named employee account")
+        return self.repository.get(actor.person_id)
+
+    def update_my_profile(self, actor: Actor, data: SelfProfileUpdate) -> dict:
+        existing = self.my_profile(actor)
+        editable = {key: existing[key] for key in PersonInput.model_fields}
+        editable.update(data.model_dump())
+        return self.repository.save(actor, PersonUpdate(**editable), actor.person_id)

@@ -23,8 +23,9 @@ class SQLiteDatabase:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version > 1:
+            migrations = sorted((Path(__file__).parent / "migrations").glob("[0-9]*_*.sql"))
+            if version > len(migrations):
                 raise RuntimeError("Database is newer than this application")
-            if version == 0:
-                sql = (Path(__file__).parent / "migrations/001_core.sql").read_text()
-                db.executescript("BEGIN IMMEDIATE;\n" + sql + "\nPRAGMA user_version = 1;\nCOMMIT;")
+            for number, migration in enumerate(migrations, 1):
+                if number > version:
+                    db.executescript("BEGIN IMMEDIATE;\n" + migration.read_text() + f"\nPRAGMA user_version = {number};\nCOMMIT;")

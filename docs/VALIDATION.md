@@ -1,36 +1,34 @@
-# Validation
+# Validation — 0.2.0
 
-Checked 2026-09-13 on the local macOS host with Python 3.14.7.
+Checked locally on 2026-09-13 with Python 3.14.7/macOS.
 
-- `pytest`: **8 passed**. Covers read/write authorization, explicit field validation,
-  duplicate email handling, stale-version conflicts, persistence after reopening,
-  event rollback, filtered pagination, Unicode case-insensitive search, separate
-  database isolation, HTTP/static routes, host checks, CLI initialization, backup
-  overwrite refusal, readable backup contents, key-file permissions, and a real
-  MCP stdio handshake/list/tool call through a running HTTP server.
-- Browser: inspected Interface's restored logo/sidebar/slate styling, authenticated
-  directory, and final empty state displaying **0 people**. The final app has no
-  demo loader. Browser form submission was not automated end-to-end; create/edit
-  behavior is covered at the HTTP/domain boundary.
-- Opt-in performance check: 4,500 synthetic people in a temporary database, 100
-  authenticated API calls searching Engineering with 20 rows per page. Each response
-  asserted a total of 2,250 and exactly 20 returned rows. Median **3.03 ms**, p95
-  **3.23 ms**; initial migration **0.67 ms**. Uses FastAPI's in-process test client,
-  so excludes real network latency and is not a load/concurrency benchmark. No
-  before/after speed claim against the old application has been measured.
-- Two upstream deprecation warnings occur in Starlette's httpx/AnyIO test adapter;
-  tests pass. Dependencies are recorded in `requirements-tested.txt`.
-
-Reproduce from the repository root after installing `.[dev,mcp]`:
+- **18 tests pass.** Includes actual HTTP/MCP stdio integration, directory validation,
+  permissions, persistent sessions, session expiry/revocation, password changes,
+  account deactivation, self-service isolation, leave overlaps/approvals/self-approval
+  rejection/cancellation, task ownership, transactional rollback, v1 schema upgrade,
+  backup contents and overwrite refusal, Unicode search, financial ratios, missing
+  data, zero division, partial-period employment, scenario costs and stale edits.
+- Connector tests use HTTP response fixtures: Greenhouse authentication, pagination,
+  upserts and secret-reference storage; missing credentials, Slack rejection, hostile
+  pagination and redacted network errors. No live customer credentials were supplied.
+- Browser inspection confirmed the updated sign-in screen, setup-key login, module
+  navigation and live empty insights/planning screen. Employee workflows are exercised
+  end-to-end through HTTP; browser form submission is not yet automated in the suite.
+- Directory performance baseline: 4,500 synthetic records, 100 in-process authenticated
+  search/page requests; median **3.16 ms**, p95 **3.36 ms**. Each response asserts the
+  correct filtered total and page size. Excludes network latency and concurrency;
+  this is not a production load benchmark or a comparison with the old application.
+- JavaScript syntax checks pass. Two upstream test-adapter deprecation warnings remain
+  (Starlette/httpx and AnyIO). The tested dependency snapshot is requirements-tested.txt.
 
 ```sh
+python -m pip install -e '.[dev,mcp]'
 pytest
 python tests/performance_check.py
 ```
 
-Performance fixtures are temporary and are never loaded by `interface init` or
-`interface serve`. Tests do not require third-party accounts or LLM services.
+Synthetic fixtures live only in temporary tests. Application startup stays empty.
 
-Not validated: deployment on other operating systems/Python versions, simultaneous
-writers under load, multi-replica operation, external HR provider sync, remote MCP,
-and real employee identity. Those remain later roadmap milestones.
+Not yet validated: live provider accounts, HTTPS proxy setup, other operating systems,
+multiple replicas, sustained concurrent writers, full security audit and recovery drill.
+The provider roadmap and operations guide state these limits explicitly.

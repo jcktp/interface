@@ -12,19 +12,23 @@ from .policy import Actor, DomainError
 from .service import PeopleService
 
 
-def create_app(directory: PeopleService, admin_token: str, reader_token: str):
+def create_app(directory: PeopleService, admin_token: str, reader_token: str, identity=None, workflows=None, insights=None, connectors=None, allowed_hosts=None, access_keys=True):
     if min(len(admin_token), len(reader_token)) < 32 or admin_token == reader_token:
         raise ValueError("Two distinct tokens of at least 32 characters are required")
-    app = FastAPI(title="Interface", version="0.1.0")
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"])
+    app = FastAPI(title="Interface", version="0.2.0")
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts or ["127.0.0.1", "localhost", "testserver"])
     bearer = HTTPBearer(auto_error=False)
 
-    def actor(credentials: HTTPAuthorizationCredentials | None = Depends(bearer)):
-        token = credentials.credentials if credentials else ""
-        if secrets.compare_digest(token, admin_token):
+    def token_value(credentials: HTTPAuthorizationCredentials | None = Depends(bearer)):
+        return credentials.credentials if credentials else ""
+
+    def actor(token: str = Depends(token_value)):
+        if access_keys and secrets.compare_digest(token.encode(), admin_token.encode()):
             return Actor("local-admin", "admin")
-        if secrets.compare_digest(token, reader_token):
+        if access_keys and secrets.compare_digest(token.encode(), reader_token.encode()):
             return Actor("local-reader", "reader")
+        if identity and token:
+            return identity.authenticate(token)
         raise DomainError(401, "Enter a valid access key")
 
     @app.exception_handler(DomainError)
@@ -47,7 +51,7 @@ def create_app(directory: PeopleService, admin_token: str, reader_token: str):
 
     @app.get("/api/v1/me")
     def me(current: Actor = Depends(actor)):
-        return {"name": current.name, "role": current.role}
+        return {"name": current.name, "role": current.role, "person_id": current.person_id}
 
     @app.get("/api/v1/people", response_model=PeoplePage)
     def people(q: str = Query("", max_length=120), limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0), current: Actor = Depends(actor)):
@@ -68,6 +72,19 @@ def create_app(directory: PeopleService, admin_token: str, reader_token: str):
     @app.get("/api/v1/events")
     def events(after: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=100), current: Actor = Depends(actor)):
         return {"items": directory.events(current, after, limit)}
+
+    if identity:
+        from .identity.routes import register_identity_routes
+        register_identity_routes(app, identity, directory, actor, token_value)
+    if workflows:
+        from .workflows.routes import register_workflow_routes
+        register_workflow_routes(app, workflows, actor)
+    if insights:
+        from .insights.routes import register_insight_routes
+        register_insight_routes(app, insights, actor)
+    if connectors:
+        from .connectors.routes import register_connector_routes
+        register_connector_routes(app, connectors, actor)
 
     static = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=static), name="static")

@@ -9,6 +9,7 @@ class PersonInput(BaseModel):
     email: str = Field(min_length=3, max_length=254, pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
     title: str = Field(default="", max_length=120)
     department: str = Field(default="", max_length=120)
+    preferred_name: str = Field(default="", max_length=120)
     status: Literal["active", "inactive"] = "active"
 
     @field_validator("email")
@@ -32,3 +33,9 @@ class PeoplePage(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class SelfProfileUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    preferred_name: str = Field(max_length=120)
+    version: int = Field(ge=1)
