@@ -11,7 +11,8 @@ class ConnectorRepository(Protocol):
     def get(self, connection_id): ...
     def create(self, actor, data): ...
     def status(self, actor, connection_id, status, message): ...
-    def sync(self, actor, connection, records, next_page): ...
+    def sync(self, actor, connection, records, next_page, cursor): ...
+    def workspace_users(self): ...
     def restart_sync(self, actor, connection_id): ...
 
 
@@ -25,7 +26,7 @@ class ConnectorService:
     def list(self,actor):
         self.policy.authorize(actor,write=True)
         connections,candidates=self.repository.list()
-        return {'providers':[asdict(adapter.spec) for adapter in self.registry.adapters.values()], 'connections':connections,'candidates':candidates}
+        return {'providers':[asdict(adapter.spec) for adapter in self.registry.adapters.values()], 'connections':connections,'candidates':candidates, 'workspace_users':self.repository.workspace_users()}
 
     def create(self,actor,data):
         self.policy.authorize(actor,write=True)
@@ -41,16 +42,16 @@ class ConnectorService:
             return self.repository.status(actor,connection_id,'missing_credentials','Set the configured environment variable on the server and restart it.')
         try:
             if sync:
-                if connection['provider']!='greenhouse':
-                    raise DomainError(422,'This provider does not support candidate sync')
+                if not hasattr(adapter, 'sync'):
+                    raise DomainError(422,'This provider does not support sync')
                 if not connection['next_page']:
                     return connection
-                records,next_page=adapter.sync(secret,connection['next_page'])
-                return self.repository.sync(actor,connection,records,next_page)
+                records,next_page,cursor=adapter.sync(secret,connection['next_page'],connection['cursor'])
+                return self.repository.sync(actor,connection,records,next_page,cursor)
             return self.repository.status(actor,connection_id,'verified',adapter.test(secret))
         except httpx.HTTPError:
             return self.repository.status(actor,connection_id,'error','Provider request failed. Check token permissions, connectivity, or provider rate limits; retry later.')
-        except (ValueError,KeyError,TypeError):
+        except (ValueError,KeyError,TypeError,AttributeError):
             return self.repository.status(actor,connection_id,'error','Provider returned an unexpected response; no sync progress was saved.')
         except DomainError as error:
             if error.status == 409:
@@ -60,6 +61,6 @@ class ConnectorService:
     def restart_sync(self, actor, connection_id):
         self.policy.authorize(actor, write=True)
         connection = self.repository.get(connection_id)
-        if connection['provider'] != 'greenhouse':
-            raise DomainError(422, 'This provider does not support candidate sync')
+        if not hasattr(self.registry.get(connection['provider']), 'sync'):
+            raise DomainError(422, 'This provider does not support sync')
         return self.repository.restart_sync(actor, connection_id)

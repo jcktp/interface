@@ -28,10 +28,10 @@ export class WorkspaceViews {
     const card = node('section', '', 'card'); card.append(node('h2', title));
     const form = node('form', '', 'module-form'); const controls = {};
     fields.forEach(spec => {
-      const label = node('label', spec.label); const input = document.createElement(spec.type === 'select' || spec.type === 'person' ? 'select' : 'input');
+      const label = node('label', spec.label); const input = document.createElement(['select','person','account'].includes(spec.type) ? 'select' : 'input');
       input.name = spec.name; input.id = `f-${this.view}-${spec.name}-${Math.random().toString(36).slice(2,8)}`;
       label.htmlFor = input.id; input.required = !spec.optional;
-      if (!['select','person'].includes(spec.type)) input.type = spec.type;
+      if (!['select','person','account'].includes(spec.type)) input.type = spec.type;
       if (spec.type === 'password') { input.autocomplete = spec.name === 'current_password' ? 'current-password' : 'new-password'; input.minLength = spec.name === 'current_password' ? 1 : 12; input.maxLength = 256; }
       if (spec.type === 'number') { input.step = spec.step || '1'; if (spec.min !== undefined) input.min = spec.min; }
       if (spec.type === 'text') input.maxLength = spec.max || 240;
@@ -50,6 +50,18 @@ export class WorkspaceViews {
           } catch (error) { input.replaceChildren(node('option', error.message)); input.firstChild.value = ''; }
         };
         search.oninput = populate; form.append(search); populate();
+      }
+      if (spec.type === 'account') {
+        input.append(node('option','Choose an account')); input.firstChild.value='';
+        let offset=0;
+        const more=this.action('Load more accounts',async()=>{
+          const page=await this.api.request(`/accounts?limit=100&offset=${offset}`);
+          for(const account of page.items.filter(a=>a.active)) {
+            const option=node('option',`${account.name} · ${account.email} · ${account.role}`); option.value=account.id; input.append(option);
+          }
+          offset+=100; more.hidden=page.items.length<100;
+        });
+        more.type='button'; form.append(more); more.click();
       }
       form.append(input); controls[spec.name] = input;
     });
@@ -86,7 +98,7 @@ export class WorkspaceViews {
     this.root.append(this.form('Preferred name', [field('preferred_name','Preferred name','text',{value:person.preferred_name, optional:true,max:120})], async values => {
       await this.api.request('/me/profile',{method:'PATCH',body:JSON.stringify({...values,version:person.version})}); await this.show('profile');
     }));
-    this.root.append(this.form('Change password', [field('current_password','Current password','password'),field('new_password','New password (12+ characters)','password')], async values => {
+    if (this.current.password_login) this.root.append(this.form('Change password', [field('current_password','Current password','password'),field('new_password','New password (12+ characters)','password')], async values => {
       await this.api.request('/auth/password',{method:'POST',body:JSON.stringify(values)}); await this.onLogout();
     }));
   }
@@ -117,9 +129,9 @@ export class WorkspaceViews {
     });
   }
   accounts(data) {
-    this.heading('Accounts', 'Link each account to a person. Share the initial password securely; the employee can change it in My profile.');
-    this.root.append(this.form('Create account',[field('person_id','Person','person'),field('role','Access','select',{options:['employee','admin']}),field('password','Initial password (12+ characters)','password')],async values=>{
-      await this.api.request('/accounts',{method:'POST',body:JSON.stringify(values)}); await this.show('accounts');
+    this.heading('Accounts', 'Link each account to a person. Leave the password empty for SSO-only access, then link the account under Connectors. Otherwise share the initial password securely.');
+    this.root.append(this.form('Create account',[field('person_id','Person','person'),field('role','Access','select',{options:['employee','admin']}),field('password','Initial password (optional for SSO-only)','password',{optional:true})],async values=>{
+      await this.api.request('/accounts',{method:'POST',body:JSON.stringify({...values,password:values.password || null})}); await this.show('accounts');
     }));
     this.list(data.items,item=>{
       const card=node('article','','card'); card.append(node('h2',item.name),node('p',`${item.email} · ${item.role} · ${item.active?'Active':'Inactive'}`));
@@ -165,21 +177,48 @@ export class WorkspaceViews {
       })); this.root.append(edit);
       const card=node('article','','card'); card.append(node('h2',item.name),node('p',`${item.current_headcount} current → ${item.target_headcount} planned · ${item.months} months`),node('p',`Projected workforce cost: ${item.currency} ${item.projected_workforce_cost}`),node('p',item.assumption,'muted')); this.root.append(card); }
   }
+  async ssoSettings() {
+    const generation = this.generation;
+    try {
+      const data = await this.api.request('/sso');
+      if (generation !== this.generation) return;
+      const section = node('section','','card'); section.append(node('h2','Single sign-on'));
+      const help = node('a','Setup instructions for Ashby, Workspace and SSO'); help.href='/static/integrations.html'; help.target='_blank'; help.rel='noopener'; section.append(help);
+      if (!data.providers.length) section.append(node('p','Configure Google or Okta on the server to enable sign-in. Setup instructions explain the credentials and callback URL.','muted'));
+      for (const provider of data.providers) section.append(node('p',`${provider.name} · Callback: ${provider.callback_url}`));
+      for (const link of data.links) {
+        const item=node('div'); item.append(node('p',`${link.name} · ${link.issuer} · ${link.subject}`));
+        const provider=data.providers.find(p=>p.issuer===link.issuer);
+        if(provider) item.append(this.action('Unlink and revoke sessions',async()=>{await this.api.request(`/sso/links/${provider.id}/${link.user_id}`,{method:'DELETE'});await this.show('connectors');}));
+        section.append(item);
+      }
+      this.root.append(section);
+      if (data.providers.length) {
+        const form=this.form('Link an SSO identity',[field('provider','Identity provider','select',{options:data.providers.map(p=>p.id)}),field('user_id','Interface account','account'),field('subject','Provider user ID (subject; not email)', 'text',{max:255})],async values=>{
+          await this.api.request('/sso/links',{method:'POST',body:JSON.stringify(values)}); await this.show('connectors');
+        });
+        form.append(node('p','For Google use the Workspace user ID; for Okta use the subject from your configured authorization server. Roles remain controlled by Interface.','muted'));
+        this.root.append(form);
+      }
+    } catch(error) { if(generation===this.generation) this.root.append(node('p',error.message,'error')); }
+  }
   connectors(data) {
     this.heading('Connectors', 'Connect supported services using server-side credentials. No credentials are sent to the browser.');
     for(const provider of data.providers) {
       const card=node('article','','card'); card.append(node('h2',provider.name),node('p',provider.description),node('p',provider.capabilities.join(' · '),'muted'));
       this.root.append(card);
     }
-    this.root.append(this.form('Add connection',[field('name','Connection name'),field('provider','Provider','select',{options:data.providers.map(p=>p.id)}),field('secret_env','Server environment variable containing the token')],async values=>{
+    this.root.append(this.form('Add connection',[field('name','Connection name'),field('provider','Provider','select',{options:data.providers.map(p=>p.id)}),field('secret_env','Server environment variable containing the credentials')],async values=>{
       await this.api.request('/connectors',{method:'POST',body:JSON.stringify(values)}); await this.show('connectors');
     }));
     for(const connection of data.connections) {
       const card=node('article','','card'); card.append(node('h2',connection.name),node('p',`${connection.provider} · ${connection.status}`),node('p',connection.message || 'Not tested yet.','muted'));
       card.append(this.action('Test connection',async()=>{await this.api.request(`/connectors/${connection.id}/test`,{method:'POST'});await this.show('connectors');}));
-      if(connection.provider==='greenhouse') card.append(this.action(connection.next_page ? 'Sync next candidate page' : 'Start refresh',async()=>{await this.api.request(`/connectors/${connection.id}/${connection.next_page ? 'sync' : 'restart'}`,{method:'POST'});await this.show('connectors');}));
+      if(['greenhouse','ashby','google_workspace'].includes(connection.provider)) card.append(this.action(connection.next_page ? 'Sync next page' : 'Start refresh',async()=>{await this.api.request(`/connectors/${connection.id}/${connection.next_page ? 'sync' : 'restart'}`,{method:'POST'});await this.show('connectors');}));
       this.root.append(card);
     }
+    if(data.workspace_users?.length) { this.root.append(node('h2','Workspace directory (first 100 by name)')); for(const item of data.workspace_users) this.root.append(node('p',`${item.name} · ${item.email} · ${item.suspended ? 'Suspended' : 'Active'} · ID ${item.external_id}`)); }
+    this.ssoSettings();
     if(data.candidates?.length) { this.root.append(node('h2','Imported candidates (first 100 by name)')); for(const item of data.candidates) this.root.append(node('p',`${item.name} · ${item.email || 'No email'} · ${item.provider}`)); }
   }
 }

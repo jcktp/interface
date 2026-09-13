@@ -33,11 +33,11 @@ class IdentityService:
 
     def create(self, actor: Actor, data: AccountCreate):
         self.policy.authorize(actor, write=True)
-        return self.repository.create(actor, data.person_id, data.role, self.hasher.hash(data.password.get_secret_value()))
+        return self.repository.create(actor, data.person_id, data.role, self.hasher.hash(data.password.get_secret_value()) if data.password else "sso-only")
 
     def login(self, data: Login):
         user = self.repository.find_by_email(data.email.strip().lower())
-        valid = self.hasher.verify(data.password.get_secret_value(), user['password_hash'] if user else self.dummy_hash)
+        valid = self.hasher.verify(data.password.get_secret_value(), user['password_hash'] if user and user['password_hash'] != 'sso-only' else self.dummy_hash)
         if not valid or not user or not user['active'] or user['status'] != 'active':
             raise DomainError(401, "Invalid email or password")
         token = secrets.token_urlsafe(32)
@@ -67,9 +67,14 @@ class IdentityService:
             raise DomainError(409, "You cannot deactivate your own account")
         return self.repository.set_active(actor, user_id, active)
 
+    def can_change_password(self, actor: Actor):
+        return bool(actor.person_id and self.repository.password_hash(actor.name) != "sso-only")
+
     def change_password(self, actor: Actor, data: PasswordChange):
         if not actor.person_id:
             raise DomainError(403, "Sign in with a named employee account")
+        if not self.can_change_password(actor):
+            raise DomainError(403, "This account uses SSO only; manage credentials with your identity provider")
         old_hash = self.repository.password_hash(actor.name)
         if not self.hasher.verify(data.current_password.get_secret_value(), old_hash):
             raise DomainError(401, "Current password is incorrect")

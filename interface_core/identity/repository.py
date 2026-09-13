@@ -66,6 +66,7 @@ class SQLiteIdentityRepository:
             db.execute("UPDATE users SET active=? WHERE id=?", (int(active), user_id))
             if not active:
                 db.execute("DELETE FROM sessions WHERE user_id=?", (user_id,))
+                db.execute("DELETE FROM sso_handoffs WHERE user_id=?", (user_id,))
             self.journal.record(db, "account.state_changed.v1", row['person_id'], actor.name, ["active"])
         return {"id": user_id, "active": active}
 
@@ -80,4 +81,5 @@ class SQLiteIdentityRepository:
             if not changed:
                 raise DomainError(409, "Password changed; sign in again")
             db.execute("DELETE FROM sessions WHERE user_id=?", (actor.name,))
+            db.execute("DELETE FROM sso_handoffs WHERE user_id=?", (actor.name,))
             self.journal.record(db, "account.password_changed.v1", actor.person_id, actor.name, [])

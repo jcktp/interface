@@ -21,6 +21,9 @@ starts empty. There are no seed files, demo commands or invented metrics.
 |---|---|
 | People | Create, edit, search, paginate and inactivate people; work email uniqueness and version checks |
 | Accounts | Named email/password login, employee/admin roles, password changes, account activation/deactivation and expiring, revocable sessions |
+| SSO | Google and Okta OIDC, explicit identity linking, optional SSO-only accounts, PKCE and signed-token verification |
+| Ashby | Resumable candidate name/email import and refresh |
+| Google Workspace | Read-only delegated directory import, including suspended status; no automatic account changes |
 | Self-service | My profile; employees can change their preferred name but cannot change roles, employment terms or someone else's record |
 | Time off | Request annual/personal leave, approve/reject as a different named admin, cancel your own request, overlap checks and transition history |
 | Onboarding | HR assigns dated tasks to a person; assignees or HR complete/reopen tasks |
@@ -33,7 +36,7 @@ starts empty. There are no seed files, demo commands or invented metrics.
 | Developer interface | Typed REST endpoints, generated OpenAPI, transactional journals and optional read-only MCP directory search |
 | Operations | Versioned schema upgrades, SQLite backup, explicit host allowlist and optional disabling of setup keys |
 
-Greenhouse and Slack adapters are tested with provider-response fixtures; they have
+Connectors and SSO are tested with provider-response fixtures and signed identity tokens; they have
 not been validated against your live accounts because no credentials were supplied.
 Their buttons perform real network requests when configured. Only implemented
 providers appear in the connector setup screen.
@@ -129,14 +132,17 @@ must begin `INTERFACE_CONNECTOR_`. Do not commit credentials or put them in URLs
 A missing variable is shown as missing credentials, not a successful connection.
 
 For Greenhouse, grant the Harvest key permission to list candidates. **Test connection**
-checks access. **Sync next candidate page** imports up to 100 records and saves progress
+checks access. **Sync next page** imports up to 100 records and saves progress
 atomically. Repeat until complete; **Start refresh** resets pagination for another pass.
 Repeated records update by external ID. The UI previews the first 100 candidates.
 Candidates are never silently turned into employees. Source deletions are not propagated.
 
 Slack currently verifies the token/workspace only. Nothing is posted to Slack.
-See [connector capabilities and expansion plan](docs/CONNECTORS.md) for Okta/SSO,
-Ashby, Lever, SmartRecruiters, payroll, Google Workspace, Jira, Confluence and AI providers.
+For **Ashby, Google Workspace and Google/Okta SSO**, install `.[integrations]` and
+follow the [setup guide](docs/CONNECTORS.md). The same instructions are linked in the
+app. Local accounts may omit a password for SSO-only access; an administrator must
+explicitly link their provider subject. SSO does not grant roles based on email.
+Lever, SmartRecruiters, payroll, Jira, Confluence and AI adapters remain planned.
 
 ## API and MCP
 
@@ -203,6 +209,7 @@ interface_core/
   repository.py           People storage
   database.py, events.py   Transactions, migration runner, journals
   identity/               Accounts, password hashing, sessions
+  sso/                    OIDC configuration, token verification, identity links
   workflows/              Leave and onboarding
   insights/               Employment, calculations, financial periods, plans
   connectors/             Provider protocol, adapters, configuration, sync
@@ -234,7 +241,7 @@ This release targets one organization and one application process per database.
 
 ```sh
 interface backup backup.sqlite3
-python -m pip install -e '.[dev,mcp]'
+python -m pip install -e '.[dev,mcp,integrations]'
 pytest
 python tests/performance_check.py
 ```
@@ -246,7 +253,7 @@ secrets must be secured/backed up separately.
 
 ## Roadmap and boundaries
 
-Next: OIDC SSO/Okta and Google Workspace, invitations/recovery, richer employment
+Next: invitations/recovery, SCIM provisioning, richer employment
 history and organization relationships, leave balances, notifications, ATS adapters,
 scoped integration keys and delivery retries. Then payroll exchange, departmental
 planning, hiring/attrition scenarios and optional AI assistance grounded in permissioned

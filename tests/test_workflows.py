@@ -148,6 +148,6 @@ def test_migration_preserves_v1(tmp_path):
         conn.execute("INSERT INTO people VALUES ('one','Original','original@example.test','','','active',1,'2026-01-01','2026-01-01')")
     db.migrate(); db.migrate()
     with db.connect() as conn:
-        assert conn.execute('PRAGMA user_version').fetchone()[0] == 6
+        assert conn.execute('PRAGMA user_version').fetchone()[0] == 7
         assert conn.execute('SELECT name FROM people').fetchone()[0] == 'Original'
         assert conn.execute('SELECT count(*) FROM users').fetchone()[0] == 0

@@ -12,7 +12,7 @@ from .policy import Actor, DomainError
 from .service import PeopleService
 
 
-def create_app(directory: PeopleService, admin_token: str, reader_token: str, identity=None, workflows=None, insights=None, connectors=None, allowed_hosts=None, access_keys=True):
+def create_app(directory: PeopleService, admin_token: str, reader_token: str, identity=None, workflows=None, insights=None, connectors=None, allowed_hosts=None, access_keys=True, sso=None):
     if min(len(admin_token), len(reader_token)) < 32 or admin_token == reader_token:
         raise ValueError("Two distinct tokens of at least 32 characters are required")
     app = FastAPI(title="Interface", version="0.2.0")
@@ -51,7 +51,7 @@ def create_app(directory: PeopleService, admin_token: str, reader_token: str, id
 
     @app.get("/api/v1/me")
     def me(current: Actor = Depends(actor)):
-        return {"name": current.name, "role": current.role, "person_id": current.person_id}
+        return {"name": current.name, "role": current.role, "person_id": current.person_id, "password_login": bool(identity and identity.can_change_password(current))}
 
     @app.get("/api/v1/people", response_model=PeoplePage)
     def people(q: str = Query("", max_length=120), limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0), current: Actor = Depends(actor)):
@@ -85,6 +85,10 @@ def create_app(directory: PeopleService, admin_token: str, reader_token: str, id
     if connectors:
         from .connectors.routes import register_connector_routes
         register_connector_routes(app, connectors, actor)
+
+    if sso:
+        from .sso.routes import register_sso_routes
+        register_sso_routes(app, sso, actor)
 
     static = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=static), name="static")

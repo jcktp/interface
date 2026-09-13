@@ -17,6 +17,27 @@ class DirectoryApp {
     el('add').onclick = () => this.openEditor();
     el('cancel').onclick = () => el('editor').close();
     el('person-form').onsubmit = event => this.save(event);
+    this.initializeSSO();
+  }
+  async initializeSSO() {
+    const outcome = new URLSearchParams(location.search).get('sso');
+    if (outcome) history.replaceState(null, '', '/');
+    try {
+      const result = await this.api.request('/auth/sso/providers');
+      for (const provider of result.items) {
+        const link = document.createElement('a'); link.className = 'sso-button';
+        link.textContent = 'Continue with ' + provider.name;
+        link.href = '/api/v1/auth/sso/' + encodeURIComponent(provider.id) + '/start';
+        el('sso-buttons').append(link);
+      }
+      if (outcome === 'failed') throw new Error('Single sign-on failed. Check that your administrator linked your identity to an active Interface account, then try again.');
+      if (outcome === 'complete') {
+        const session = await this.api.request('/auth/sso/session', {method:'POST'});
+        this.api.unlock(session.access_token); await this.finishLogin();
+        el('access').hidden = true; el('logout').hidden = false; el('add').hidden = this.role !== 'admin';
+        await this.navigate(this.current.person_id ? 'profile' : 'directory');
+      }
+    } catch(error) { this.api.lock(); this.message(error); }
   }
   message(error) { el('message').textContent = error.message; }
   async login(event) {

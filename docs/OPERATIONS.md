@@ -66,7 +66,7 @@ For incident recovery, revoke those sessions before reopening service.
 
 ## Limits of this release
 
-- No SSO, MFA, email verification, password-reset email or invitation service yet.
+- Google/Okta OIDC is available as an optional integration. Native MFA, email verification, password-reset email and invitations are not implemented.
 - No payroll engine, accrual/holiday entitlement calculation, or multi-organization SaaS.
 - Journals are transactional and attributable, but not immutable/tamper-evident.
 - Financial plans assume a constant target headcount and user-supplied costs.
@@ -78,3 +78,14 @@ For incident recovery, revoke those sessions before reopening service.
 
 The README's feature table is the authoritative distinction between available
 operations and planned work. No UI-only feature is advertised as implemented.
+
+## Optional integrations and sign-in
+
+See [connector setup](CONNECTORS.md) for Ashby, Workspace and Google/Okta SSO.
+Set INTERFACE_PUBLIC_URL to the exact HTTPS browser origin and register the documented
+callbacks. Secure the environment secrets separately from SQLite backups. SSO attempts
+and handoffs are short-lived database records; identity links and sessions are included
+in backups. Unlinking an identity revokes sessions. Provider-side deactivation is not
+continuous: deactivate the Interface account for immediate access removal.
+The CLI disables access logs to avoid logging callback codes. Configure reverse-proxy
+logs to omit query strings as well. Use process/error logs for operational failures.

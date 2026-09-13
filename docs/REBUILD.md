@@ -118,17 +118,16 @@ for setup and the exact implemented feature table.
 - Implemented: named accounts and self-service, leave request/approval/cancellation,
   onboarding tasks, employment dates/previous company, tenure and per-employee financial
   metrics, editable workforce cost scenarios, and connector adapters for Greenhouse
-  candidate import and Slack credential verification.
+  and Ashby candidate import, Workspace directory import, Google/Okta OIDC and Slack credential verification.
 - Preserved: Interface branding, modular OOP, no seed/demo loader, one process,
   explicit policies, typed APIs and atomic journals.
-- Next identity work: OIDC/Okta, Google Workspace, invitation/recovery, MFA and better
-  account linking. These precede a broad enterprise deployment claim.
+- Next identity work: SCIM, invitation/recovery, MFA and richer account lifecycle handling. These precede a broad enterprise deployment claim.
 - Next HR work: organization hierarchy, full employment histories/rehire intervals,
   leave balances/calendars and notification delivery.
 - Next insights work: departmental plans, hiring ramps, attrition assumptions,
   fiscal-period comparisons, richer recruitment and workforce analytics. The original
   planning/insights product direction remains in scope as separate modules.
-- Next integrations: Ashby, Lever, SmartRecruiters, payroll exchange, Jira, Confluence,
+- Next integrations: Lever, SmartRecruiters, payroll exchange, Jira, Confluence,
   AI-provider adapters and permission-aware MCP workflow tools. See CONNECTORS.md.
 
 ## Licensing
@@ -136,3 +135,10 @@ for setup and the exact implemented feature table.
 The 0.2 release uses BSL 1.1, with Jorick Polderman as licensor, free internal production
 use, a restriction on third-party hosted services, and an Apache 2.0 change date of
 September 13, 2030. It is source-available. The earlier MIT release remains in history.
+
+## Integration follow-up
+
+Ashby candidate sync, delegated Google Workspace directory snapshots, and Google/Okta
+OIDC sign-in now use the existing service/repository structure. No deployment service
+was added. Optional integration dependencies handle credential signing and JWT checks.
+See CONNECTORS.md for exact setup, supported hosts and remaining boundaries.

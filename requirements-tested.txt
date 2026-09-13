@@ -7,6 +7,7 @@ cffi==2.1.1
 click==8.5.0
 cryptography==50.0.1
 fastapi==0.141.1
+google-auth==2.58.0
 h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
@@ -18,6 +19,8 @@ jsonschema-specifications==2025.9.1
 mcp==1.30.0
 packaging==26.3
 pluggy==1.6.0
+pyasn1==0.6.4
+pyasn1_modules==0.4.2
 pycparser==3.0
 pydantic==2.13.5
 pydantic-settings==2.15.0

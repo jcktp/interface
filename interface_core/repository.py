@@ -46,6 +46,7 @@ class SQLitePeopleRepository:
                     db.execute("UPDATE people SET name=:name, email=:email, title=:title, department=:department, preferred_name=:preferred_name, status=:status, version=version+1, updated_at=:now WHERE id=:id", dict(values, now=now, id=person_id))
                     if values['status'] == 'inactive':
                         db.execute('DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE person_id=?)', (person_id,))
+                        db.execute('DELETE FROM sso_handoffs WHERE user_id IN (SELECT id FROM users WHERE person_id=?)', (person_id,))
                     event = "person.updated.v1"
                 else:
                     person_id = str(uuid4())

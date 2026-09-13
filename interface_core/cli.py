@@ -45,7 +45,7 @@ def main():
         if any('*' in host or '/' in host for host in args.allowed_host):
             parser.error('Use explicit hostnames, without wildcards or URL schemes')
         hosts=['127.0.0.1','localhost',*args.allowed_host]
-        uvicorn.run(build_app(database, keys, hosts, not args.disable_access_keys), host=args.host, port=args.port, proxy_headers=False)
+        uvicorn.run(build_app(database, keys, hosts, not args.disable_access_keys), host=args.host, port=args.port, proxy_headers=False, access_log=False)
     else:
         destination = args.destination.resolve()
         if destination.exists():

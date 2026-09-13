@@ -12,7 +12,10 @@ from .connectors.repository import SQLiteConnectorRepository
 from .connectors.service import ConnectorService
 
 
-def build_app(database, keys, allowed_hosts=None, access_keys=True):
+def build_app(database, keys, allowed_hosts=None, access_keys=True, sso_config=None, sso_client=None):
+    from .sso.config import SSOConfig
+    from .sso.repository import SQLiteSSORepository
+    from .sso.service import SSOService
     return create_app(
         PeopleService(SQLitePeopleRepository(database)), keys['admin'], keys['reader'],
         identity=IdentityService(SQLiteIdentityRepository(database)),
@@ -20,4 +23,5 @@ def build_app(database, keys, allowed_hosts=None, access_keys=True):
         insights=InsightsService(SQLiteInsightsRepository(database)),
         connectors=ConnectorService(SQLiteConnectorRepository(database)),
         allowed_hosts=allowed_hosts, access_keys=access_keys,
+        sso=SSOService(SQLiteSSORepository(database),sso_config or SSOConfig.from_environment(),sso_client),
     )

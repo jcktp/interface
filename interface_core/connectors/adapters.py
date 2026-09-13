@@ -51,7 +51,7 @@ class GreenhouseAdapter:
             raise DomainError(502, 'Unexpected Greenhouse response')
         return 'Verified access to Harvest candidates'
 
-    def sync(self, secret, page):
+    def sync(self, secret, page, cursor=""):
         response = self.request(secret, page, 100)
         body = response.json()
         if not isinstance(body, list) or len(body) > 100:
@@ -70,13 +70,15 @@ class GreenhouseAdapter:
             if url.scheme!='https' or url.netloc!='harvest.greenhouse.io' or url.path.rstrip('/')!='/v1/candidates' or not values or not values[0].isdigit() or int(values[0])<=page:
                 raise DomainError(502, 'Provider returned an invalid pagination link')
             next_page=int(values[0])
-        return records,next_page
+        return records,next_page,""
 
 
 class ProviderRegistry:
     def __init__(self, client=None):
         self.client=client or httpx.Client(timeout=15, follow_redirects=False, trust_env=False)
-        self.adapters={adapter.spec.id:adapter for adapter in [SlackAdapter(self.client),GreenhouseAdapter(self.client)]}
+        from .ashby import AshbyAdapter
+        from .workspace import WorkspaceAdapter
+        self.adapters={adapter.spec.id:adapter for adapter in [SlackAdapter(self.client),GreenhouseAdapter(self.client),AshbyAdapter(self.client),WorkspaceAdapter(self.client)]}
 
     def get(self, provider):
         if provider not in self.adapters:

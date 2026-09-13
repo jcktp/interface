@@ -6,7 +6,7 @@ class AccountCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     person_id: str
     role: Literal["admin", "employee"] = "employee"
-    password: SecretStr = Field(min_length=12, max_length=256)
+    password: SecretStr | None = Field(default=None, min_length=12, max_length=256)
 
 
 class Login(BaseModel):
