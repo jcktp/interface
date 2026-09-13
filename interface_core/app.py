@@ -12,10 +12,10 @@ from .policy import Actor, DomainError
 from .service import PeopleService
 
 
-def create_app(directory: PeopleService, admin_token: str, reader_token: str, identity=None, workflows=None, insights=None, connectors=None, allowed_hosts=None, access_keys=True, sso=None):
+def create_app(directory: PeopleService, admin_token: str, reader_token: str, identity=None, workflows=None, insights=None, connectors=None, allowed_hosts=None, access_keys=True, sso=None, employee=None, talent=None):
     if min(len(admin_token), len(reader_token)) < 32 or admin_token == reader_token:
         raise ValueError("Two distinct tokens of at least 32 characters are required")
-    app = FastAPI(title="Interface", version="0.2.0")
+    app = FastAPI(title="Interface", version="0.3.0")
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts or ["127.0.0.1", "localhost", "testserver"])
     bearer = HTTPBearer(auto_error=False)
 
@@ -89,6 +89,13 @@ def create_app(directory: PeopleService, admin_token: str, reader_token: str, id
     if sso:
         from .sso.routes import register_sso_routes
         register_sso_routes(app, sso, actor)
+
+    if employee:
+        from .employee.routes import register_employee_routes
+        register_employee_routes(app,employee,actor)
+    if talent:
+        from .talent.routes import register_talent_routes
+        register_talent_routes(app,talent,actor)
 
     static = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=static), name="static")

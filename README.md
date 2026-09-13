@@ -11,9 +11,26 @@ The Interface name, logo, compact slate design and sidebar are retained. The reb
 uses a single Python application with SQLite, explicit OOP services and repositories,
 and a browser UI that calls the same HTTP operations available to developers.
 
-**Version 0.2.0 · BSL 1.1 · source-available.** This is a functional early release,
+**Version 0.3.0 · BSL 1.1 · source-available.** This is a functional early release,
 not a demo or complete replacement for payroll/enterprise HR suites. Every instance
 starts empty. There are no seed files, demo commands or invented metrics.
+
+## New in 0.3: connected HR workflows
+
+- **Import data:** upload CSV, map columns, preview/errors, then confirm a transactional
+  create/update batch. No need to enter employees one at a time.
+- **Hire inbox:** import Ashby hired applications with job, recruiter, hiring manager
+  and source context; review work email and employment dates before creating employees.
+- **My workspace:** personal/emergency details, encrypted and masked bank details,
+  contract information, leave balances and shortcuts to absences/onboarding.
+- **Time off & sickness:** request/cancel leave, report sickness, update the last sick
+  day, and view explicit Monday–Friday annual balances.
+- **Hiring & quality:** quality-of-hire cohorts, assessment history, performance and
+  engagement samples, 90-day retention, hiring-cycle time and recorded hiring costs.
+- **Payroll export:** audited HR-only CSV of bank information and available contract pay.
+
+See [workflow guide and original-build comparison](docs/RESTORATION.md) for setup,
+metric definitions and what still needs restoring. This is not full original-feature parity.
 
 ## Implemented features
 
@@ -22,12 +39,12 @@ starts empty. There are no seed files, demo commands or invented metrics.
 | People | Create, edit, search, paginate and inactivate people; work email uniqueness and version checks |
 | Accounts | Named email/password login, employee/admin roles, password changes, account activation/deactivation and expiring, revocable sessions |
 | SSO | Google and Okta OIDC, explicit identity linking, optional SSO-only accounts, PKCE and signed-token verification |
-| Ashby | Resumable candidate name/email import and refresh |
+| Ashby | Candidate import plus a separate hired-application connector and reviewed employee creation |
 | Google Workspace | Read-only delegated directory import, including suspended status; no automatic account changes |
-| Self-service | My profile; employees can change their preferred name but cannot change roles, employment terms or someone else's record |
-| Time off | Request annual/personal leave, approve/reject as a different named admin, cancel your own request, overlap checks and transition history |
+| Self-service | My workspace; own personal/emergency and bank updates, read-only contract and employment information; no access to others’ private records |
+| Time off | Annual/personal leave, approvals/cancellation, explicit annual allowances, weekday balances, sickness reporting/amendment and overlap checks |
 | Onboarding | HR assigns dated tasks to a person; assignees or HR complete/reopen tasks |
-| Employment | Hire date, last employed date and previous company, with restricted access and version checks |
+| Employment | Employment dates/previous company plus contract terms, hours, salary, manager/location; restricted access and version checks |
 | Workforce insights | Active headcount, departments, previous-company breakdown, average and combined company tenure, explicit missing-data coverage |
 | Financial metrics | Enter/edit period revenue and net profit; revenue and profit per employee using average daily headcount |
 | Workforce planning | Create/edit scenarios with target headcount, fully loaded annual cost, duration and currency; calculate projected workforce cost |
@@ -67,7 +84,7 @@ Open [Interface](http://127.0.0.1:8000). For the first administrator:
    **Accounts**. Initial passwords require at least 12 characters.
 4. Sign out and sign in using your work email and password.
 5. Add colleagues, create their accounts, and share initial passwords through an
-   appropriate private channel. Employees can change passwords in **My profile**.
+   appropriate private channel. Employees can change passwords in **My workspace**.
 6. Once named administration works, restart with `interface serve --disable-access-keys`
    to disable the shared setup/admin and reader keys.
 
@@ -83,9 +100,10 @@ request. Administrators cannot approve their own leave. The requester can cancel
 pending or approved request. Exact retries reuse a live request rather than creating
 a duplicate. Cancelled/rejected dates can be requested again.
 
-Dates are calendar dates, not charged workdays. This release does not calculate
-holiday calendars, accruals, balances, half days, payroll deductions or legal leave
-entitlements. The workflow records decisions and does not make entitlement decisions.
+Absence dates are inclusive. Explicit annual allowances and balances use Monday–Friday
+days; holidays and individual work schedules are not excluded. Accruals, half days and
+payroll deductions are not implemented. Sickness does not reduce annual leave. See the
+[absence rules](docs/RESTORATION.md) before configuring a company policy.
 
 **Onboarding:** an administrator finds a person, enters a task and due date, and saves.
 Employees see only their own tasks. Both assignee and HR can complete or reopen a task.
@@ -210,7 +228,9 @@ interface_core/
   database.py, events.py   Transactions, migration runner, journals
   identity/               Accounts, password hashing, sessions
   sso/                    OIDC configuration, token verification, identity links
-  workflows/              Leave and onboarding
+  employee/               Private details, contracts, bank vault and leave balances
+  talent/                 CSV import, hiring inbox, quality cohorts and assessment history
+  workflows/              Leave, sickness and onboarding
   insights/               Employment, calculations, financial periods, plans
   connectors/             Provider protocol, adapters, configuration, sync
   app.py, cli.py           HTTP/application lifecycle
@@ -248,8 +268,9 @@ python tests/performance_check.py
 
 Backups use SQLite's online backup API and refuse to overwrite existing files.
 Stop the server before restoring a backup as `people.sqlite3`; preserve the previous
-file. Account/session data is in the database. Setup keys and connector environment
-secrets must be secured/backed up separately.
+file. Account/session data is in the database. Setup keys, `data/private.key` and connector environment
+secrets must be secured/backed up separately. The private key is required to decrypt
+personal and bank records.
 
 ## Roadmap and boundaries
 
@@ -265,7 +286,7 @@ will not become a prerequisite for normal HR workflows.
 
 ## License
 
-Interface 0.2.0 is **source-available under Business Source License 1.1**, not an
+Interface 0.3.0 is **source-available under Business Source License 1.1**, not an
 OSI open-source release. Licensor: **Jorick Polderman**. The Additional Use Grant
 allows internal business production use, including employees and contractors acting
 on your behalf. Offering the software as a hosted/managed service to third parties

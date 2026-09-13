@@ -31,8 +31,8 @@ class SQLiteWorkflowRepository:
             if overlap:
                 raise DomainError(409, 'These dates overlap an existing request')
             record_id = str(uuid4())
-            db.execute("INSERT INTO leave_requests(id,person_id,start_date,end_date,kind,note,status,created_at) VALUES (?,?,?,?,?,?,'requested',?)", (record_id, actor.person_id, values['start_date'], values['end_date'], data.kind, data.note, datetime.now(timezone.utc).isoformat()))
-            self.journal.record(db, 'leave', record_id, 'leave.requested.v1', actor.name)
+            db.execute("INSERT INTO leave_requests(id,person_id,start_date,end_date,kind,note,status,created_at) VALUES (?,?,?,?,?,?,?,?)", (record_id, actor.person_id, values['start_date'], values['end_date'], data.kind, data.note, 'approved' if data.kind == 'sick' else 'requested', datetime.now(timezone.utc).isoformat()))
+            self.journal.record(db, 'leave', record_id, 'leave.sickness_reported.v1' if data.kind == 'sick' else 'leave.requested.v1', actor.name)
             return dict(db.execute('SELECT * FROM leave_requests WHERE id=?', (record_id,)).fetchone())
 
     def transition_leave(self, actor, record_id, data):
@@ -85,3 +85,19 @@ class SQLiteWorkflowRepository:
             db.execute('UPDATE onboarding_tasks SET status=?,version=version+1 WHERE id=?', (data.status, record_id))
             self.journal.record(db, 'task', record_id, f'task.{data.status}.v1', actor.name)
             return dict(db.execute('SELECT * FROM onboarding_tasks WHERE id=?', (record_id,)).fetchone())
+
+    def amend_sickness(self,actor,record_id,data):
+        from .models import LeaveCreate
+        with self.database.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row=db.execute('SELECT * FROM leave_requests WHERE id=?',(record_id,)).fetchone()
+            if not row or row['person_id']!=actor.person_id:raise DomainError(404,'Sickness report not found')
+            if row['kind']!='sick' or row['status']!='approved':raise DomainError(409,'Only an active sickness report can be amended')
+            from pydantic import ValidationError
+            try:LeaveCreate(start_date=row['start_date'],end_date=data.end_date,kind='sick')
+            except ValidationError:raise DomainError(422,'Choose an ordered sickness period of at most 367 days') from None
+            if row['version']!=data.version:raise DomainError(409,'Report changed; reload')
+            if db.execute("SELECT id FROM leave_requests WHERE person_id=? AND id<>? AND status IN ('requested','approved') AND start_date<=? AND end_date>=?",(actor.person_id,record_id,data.end_date.isoformat(),row['start_date'])).fetchone():raise DomainError(409,'Updated sickness overlaps another absence')
+            db.execute('UPDATE leave_requests SET end_date=?,version=version+1 WHERE id=?',(data.end_date.isoformat(),record_id))
+            self.journal.record(db,'leave',record_id,'leave.sickness_amended.v1',actor.name)
+            return dict(db.execute('SELECT * FROM leave_requests WHERE id=?',(record_id,)).fetchone())

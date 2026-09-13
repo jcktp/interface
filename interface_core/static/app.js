@@ -1,5 +1,5 @@
 import {ApiClient} from './api.js';
-import {WorkspaceViews} from './views.js';
+import {EmployeeWorkspace as WorkspaceViews} from './employee-workspace.js';
 const el = id => document.getElementById(id);
 
 class DirectoryApp {
@@ -68,7 +68,7 @@ class DirectoryApp {
   }
   async navigate(view) {
     document.querySelectorAll('[data-view]').forEach(button => button.classList.toggle('nav-active',button.dataset.view === view));
-    el('page-title').textContent = {directory:'People',profile:'My profile',leave:'Time off',tasks:'Onboarding',insights:'Insights & planning',accounts:'Accounts',connectors:'Connectors'}[view] || 'Employment';
+    el('page-title').textContent = {directory:'People',profile:'My workspace',leave:'Time off',tasks:'Onboarding',insights:'Insights & planning',accounts:'Accounts',connectors:'Connectors',talent:'Hiring & quality',imports:'Import data',hires:'Hire inbox'}[view] || 'Employment';
     el('directory').hidden = view !== 'directory'; el('workspace').hidden = view === 'directory';
     if(view === 'directory') { this.workspace.clear(); try { await this.load(); } catch(error) { this.message(error); } }
     else await this.workspace.show(view);
@@ -90,7 +90,7 @@ class DirectoryApp {
     el('rows').replaceChildren(...data.items.map(person => this.row(person)));
     el('count').textContent = `${data.total} ${data.total === 1 ? 'person' : 'people'} · ${this.role === 'admin' ? 'Administrator' : 'Read access'}`;
     el('empty').hidden = data.total !== 0;
-    el('empty-text').textContent = el('query').value ? 'No matches. Try a different name or department.' : this.role === 'admin' ? 'Add your first colleague to get started.' : 'Your administrator can add people here.';
+    el('empty-text').textContent = el('query').value ? 'No matches. Try a different name or department.' : this.role === 'admin' ? 'Import a CSV, review ATS hires, or add your first colleague.' : 'Your administrator can add people here.';
     el('page').textContent = data.total ? `${this.offset + 1}–${Math.min(this.offset + 20, data.total)} of ${data.total}` : '0 people';
     el('previous').disabled = this.offset === 0; el('next').disabled = this.offset + 20 >= data.total;
   }
@@ -109,7 +109,7 @@ class DirectoryApp {
     if (this.role === 'admin') {
       const edit = document.createElement('button'); edit.className = 'secondary'; edit.textContent = 'Edit';
       edit.setAttribute('aria-label', 'Edit ' + person.name); edit.onclick = () => this.openEditor(person); actions.append(edit);
-      const employment = document.createElement('button'); employment.className = 'secondary'; employment.textContent = 'Employment'; employment.onclick = async () => { el('directory').hidden = true; el('workspace').hidden = false; await this.workspace.employment(person); }; actions.append(employment);
+      const employment = document.createElement('button'); employment.className = 'secondary'; employment.textContent = 'Employee record'; employment.onclick = async () => { el('directory').hidden = true; el('workspace').hidden = false; await this.workspace.employeeRecord(person); }; actions.append(employment);
     }
     row.append(actions); return row;
   }

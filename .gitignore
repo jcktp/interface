@@ -11,3 +11,5 @@ build/
 *.sqlite3-*
 keys.json
 .DS_Store
+
+private.key

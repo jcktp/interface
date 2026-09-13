@@ -1,8 +1,8 @@
-# Validation — 0.2.0
+# Validation — 0.3.0
 
 Checked locally on 2026-09-13 with Python 3.14.7/macOS.
 
-- **37 tests pass.** Includes actual HTTP/MCP stdio integration, directory validation,
+- **44 tests pass.** Includes actual HTTP/MCP stdio integration, directory validation,
   permissions, persistent sessions, session expiry/revocation, password changes,
   account deactivation, self-service isolation, leave overlaps/approvals/self-approval
   rejection/cancellation, task ownership, transactional rollback, v1 schema upgrade,
@@ -21,7 +21,7 @@ Checked locally on 2026-09-13 with Python 3.14.7/macOS.
   navigation and live empty insights/planning screen. Employee workflows are exercised
   end-to-end through HTTP; browser form submission is not yet automated in the suite.
 - Directory performance baseline: 4,500 synthetic records, 100 in-process authenticated
-  search/page requests; median **3.15 ms**, p95 **3.35 ms**. Each response asserts the
+  search/page requests; median **3.28 ms**, p95 **3.45 ms**. Each response asserts the
   correct filtered total and page size. Excludes network latency and concurrency;
   this is not a production load benchmark or a comparison with the old application.
 - JavaScript syntax checks pass. Two upstream test-adapter deprecation warnings remain
@@ -43,3 +43,22 @@ Integration follow-up: the app starts from a fresh virtual environment in the re
 project. The real HTTP login, admin role, connector registry, SSO settings and in-app
 setup page were checked locally. A test administrator was created only in the operator’s
 ignored local database on request; no account or seed data is part of the repository.
+
+
+0.3 additions: API tests cover private profile isolation, emergency contact persistence,
+bank encryption/masking and IBAN validation, contract write permissions, allowance and
+weekday balances, sickness amendments/cancellation, CSV mapping/errors/atomic commit,
+retry and stale-preview behavior, rollback on journal failure, quality zero/missing
+handling and cohorts, audited payroll export, assessment history, and Ashby application
+mapping followed by reviewed employee creation. Provider calls remain simulated.
+
+Browser verification used a disposable local database: CSV file chooser → automatic
+column mapping → validated preview → confirm import → quality dashboard → employee
+assessment history. The score, recruiter, department and cohort matched the fixture.
+The user's local instance was inspected separately for My workspace, with no added
+sample employees. Live customer ATS data, bank ownership and payroll submission have
+not been verified. No production-readiness claim is implied.
+
+The 0.3 wheel builds successfully with a populated local data folder. Package discovery
+is restricted to interface_core; the wheel includes new modules/migration/UI and excludes
+local databases, keys and tests.

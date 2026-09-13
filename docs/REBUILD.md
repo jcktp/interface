@@ -142,3 +142,10 @@ Ashby candidate sync, delegated Google Workspace directory snapshots, and Google
 OIDC sign-in now use the existing service/repository structure. No deployment service
 was added. Optional integration dependencies handle credential signing and JWT checks.
 See CONNECTORS.md for exact setup, supported hosts and remaining boundaries.
+
+## Product capability restoration
+
+Version 0.3 adds CSV mapping/preview/commit, an Ashby hiring inbox, private employee
+self-service, contracts, payroll export, sickness/balances and quality-of-hire cohorts.
+[The restoration inventory](RESTORATION.md) compares it with the original workflows
+and explicitly tracks the remaining gaps.

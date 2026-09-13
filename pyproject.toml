@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "interface"
-version = "0.2.0"
+version = "0.3.0"
 description = "Modular HRIS with employee workflows, workforce insights and MCP"
 requires-python = ">=3.11"
 license = "BUSL-1.1"
-dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "httpx>=0.27,<1"]
+dependencies = ["cryptography>=44,<51", "fastapi>=0.115,<1", "uvicorn>=0.30,<1", "httpx>=0.27,<1"]
 
 [project.optional-dependencies]
 integrations = ["google-auth[cryptography]>=2.40,<3", "PyJWT[crypto]>=2.10,<3"]
@@ -24,3 +24,6 @@ interface_core = ["static/*", "migrations/*.sql"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+include = ["interface_core*"]

@@ -1,8 +1,8 @@
-const node = (tag, text = '', className = '') => {
+export const node = (tag, text = '', className = '') => {
   const item = document.createElement(tag); item.textContent = text; item.className = className; return item;
 };
-const field = (name, label, type = 'text', extra = {}) => ({name, label, type, ...extra});
-const currency = field('currency', 'Currency', 'select', {options: ['EUR', 'USD', 'GBP']});
+export const field = (name, label, type = 'text', extra = {}) => ({name, label, type, ...extra});
+export const currency = field('currency', 'Currency', 'select', {options: ['EUR', 'USD', 'GBP']});
 
 export class WorkspaceViews {
   constructor(api, current, onLogout) {
@@ -15,7 +15,7 @@ export class WorkspaceViews {
     this.view = view; const generation = ++this.generation;
     this.root.replaceChildren(node('p', 'Loading…', 'muted'));
     try {
-      const result = await this.api.request({profile:'/me/profile',leave:'/leave',tasks:'/tasks',accounts:'/accounts',insights:'/insights',connectors:'/connectors'}[view] + (['leave','tasks','accounts'].includes(view) ? `?limit=50&offset=${this.offset}` : ''));
+      const result = await this.api.request({profile:'/me/profile',leave:'/leave',tasks:'/tasks',accounts:'/accounts',insights:'/insights',connectors:'/connectors',talent:'/talent',hires:'/hires',imports:'/me'}[view] + (['leave','tasks','accounts'].includes(view) ? `?limit=50&offset=${this.offset}` : ''));
       if (generation !== this.generation) return;
       this.root.replaceChildren();
       this[view](result);
@@ -35,7 +35,7 @@ export class WorkspaceViews {
       if (spec.type === 'password') { input.autocomplete = spec.name === 'current_password' ? 'current-password' : 'new-password'; input.minLength = spec.name === 'current_password' ? 1 : 12; input.maxLength = 256; }
       if (spec.type === 'number') { input.step = spec.step || '1'; if (spec.min !== undefined) input.min = spec.min; }
       if (spec.type === 'text') input.maxLength = spec.max || 240;
-      for (const option of spec.options || []) { const item = node('option', option); item.value = option; input.append(item); }
+      for (const option of spec.options || []) { const item = node('option', typeof option === 'string' ? option : option.label); item.value = typeof option === 'string' ? option : option.value; input.append(item); }
       if (spec.value !== undefined && spec.value !== null) input.value = spec.value;
       form.append(label);
       if (spec.type === 'person') {
@@ -214,7 +214,7 @@ export class WorkspaceViews {
     for(const connection of data.connections) {
       const card=node('article','','card'); card.append(node('h2',connection.name),node('p',`${connection.provider} · ${connection.status}`),node('p',connection.message || 'Not tested yet.','muted'));
       card.append(this.action('Test connection',async()=>{await this.api.request(`/connectors/${connection.id}/test`,{method:'POST'});await this.show('connectors');}));
-      if(['greenhouse','ashby','google_workspace'].includes(connection.provider)) card.append(this.action(connection.next_page ? 'Sync next page' : 'Start refresh',async()=>{await this.api.request(`/connectors/${connection.id}/${connection.next_page ? 'sync' : 'restart'}`,{method:'POST'});await this.show('connectors');}));
+      if(['greenhouse','ashby','ashby_hires','google_workspace'].includes(connection.provider)) card.append(this.action(connection.next_page ? 'Sync next page' : 'Start refresh',async()=>{await this.api.request(`/connectors/${connection.id}/${connection.next_page ? 'sync' : 'restart'}`,{method:'POST'});await this.show('connectors');}));
       this.root.append(card);
     }
     if(data.workspace_users?.length) { this.root.append(node('h2','Workspace directory (first 100 by name)')); for(const item of data.workspace_users) this.root.append(node('p',`${item.name} · ${item.email} · ${item.suspended ? 'Suspended' : 'Active'} · ID ${item.external_id}`)); }

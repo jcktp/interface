@@ -7,6 +7,7 @@ on the server. Only implemented providers appear in the app.
 | Provider | Implemented capability | Not included |
 |---|---|---|
 | Ashby | Verify API access; resumable candidate name/email import; external-ID upserts and manual refresh | Applications, hiring stages, hire-to-employee conversion, incremental sync tokens |
+| Ashby hired applications | Candidate/job/team/source context into a reviewed hire inbox | Offer/start-date enrichment, automatic employee creation |
 | Greenhouse Harvest | Verify API access; resumable candidate name/email import and refresh | Applications and hire-to-employee conversion |
 | Google Workspace | Delegated read-only directory import: names, email, suspended status and Google user ID | Provisioning, automatic HR changes, group membership and deletion propagation |
 | Google sign-in | Authorization code + PKCE, signed ID-token verification and explicitly linked Interface accounts | Automatic email-based linking or domain-wide admission |
@@ -171,3 +172,9 @@ Next capabilities: candidate applications and reviewed hire conversion, Lever an
 SmartRecruiters, SCIM provisioning, invitations/recovery, durable Slack/Jira/Confluence
 notifications, payroll reconciliation and optional AI adapters with explicit data-sharing
 controls. These are not implemented by the current connectors.
+
+## Hired applications
+
+Choose `ashby_hires` for the application-context workflow and `ashby` for the earlier
+candidate-only snapshot. Both use candidatesRead. See [hire inbox and restoration guide](RESTORATION.md)
+for exact mappings, review steps and date limitations.

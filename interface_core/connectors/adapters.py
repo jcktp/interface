@@ -77,8 +77,9 @@ class ProviderRegistry:
     def __init__(self, client=None):
         self.client=client or httpx.Client(timeout=15, follow_redirects=False, trust_env=False)
         from .ashby import AshbyAdapter
+        from .ashby_hires import AshbyHiresAdapter
         from .workspace import WorkspaceAdapter
-        self.adapters={adapter.spec.id:adapter for adapter in [SlackAdapter(self.client),GreenhouseAdapter(self.client),AshbyAdapter(self.client),WorkspaceAdapter(self.client)]}
+        self.adapters={adapter.spec.id:adapter for adapter in [SlackAdapter(self.client),GreenhouseAdapter(self.client),AshbyAdapter(self.client),AshbyHiresAdapter(self.client),WorkspaceAdapter(self.client)]}
 
     def get(self, provider):
         if provider not in self.adapters:

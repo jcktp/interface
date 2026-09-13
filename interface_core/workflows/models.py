@@ -7,7 +7,7 @@ class LeaveCreate(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     start_date: date
     end_date: date
-    kind: Literal['annual', 'personal'] = 'annual'
+    kind: Literal['annual', 'personal', 'sick'] = 'annual'
     note: str = Field(default='', max_length=1000)
 
     @model_validator(mode='after')
@@ -34,3 +34,9 @@ class TaskTransition(BaseModel):
     model_config = ConfigDict(extra='forbid')
     status: Literal['open', 'done']
     version: int = Field(ge=1)
+
+
+class LeaveAmend(BaseModel):
+    model_config=ConfigDict(extra="forbid")
+    end_date: date
+    version: int=Field(ge=1)

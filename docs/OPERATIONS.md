@@ -89,3 +89,11 @@ in backups. Unlinking an identity revokes sessions. Provider-side deactivation i
 continuous: deactivate the Interface account for immediate access removal.
 The CLI disables access logs to avoid logging callback codes. Configure reverse-proxy
 logs to omit query strings as well. Use process/error logs for operational failures.
+
+## Private employee data in 0.3
+
+Back up the generated private.key alongside the database, in private storage. It is
+required to decrypt personal/emergency and bank data. Bank reads are masked; HR payroll
+exports contain full details and must be handled as private files. Contract salary and
+import previews remain access-controlled database records; this is not whole-database
+encryption. Keep the data directory restricted and use encrypted disks/backups.

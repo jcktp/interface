@@ -16,8 +16,15 @@ def build_app(database, keys, allowed_hosts=None, access_keys=True, sso_config=N
     from .sso.config import SSOConfig
     from .sso.repository import SQLiteSSORepository
     from .sso.service import SSOService
+    from .employee.vault import PrivateVault
+    from .employee.repository import SQLiteEmployeeRepository
+    from .employee.service import EmployeeService
+    from .talent.repository import SQLiteTalentRepository
+    from .talent.service import TalentService
     return create_app(
         PeopleService(SQLitePeopleRepository(database)), keys['admin'], keys['reader'],
+        employee=EmployeeService(SQLiteEmployeeRepository(database,PrivateVault(database.path.with_name("private.key")))),
+        talent=TalentService(SQLiteTalentRepository(database)),
         identity=IdentityService(SQLiteIdentityRepository(database)),
         workflows=WorkflowService(SQLiteWorkflowRepository(database)),
         insights=InsightsService(SQLiteInsightsRepository(database)),

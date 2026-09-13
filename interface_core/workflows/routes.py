@@ -1,3 +1,4 @@
+from .models import LeaveAmend
 from fastapi import Depends, Query
 from ..policy import Actor
 from .models import LeaveCreate, LeaveTransition, TaskCreate, TaskTransition
@@ -27,3 +28,7 @@ def register_workflow_routes(app, service, actor_dependency):
     @app.post('/api/v1/tasks/{record_id}/transition', tags=['Onboarding'])
     def complete(record_id: str, data: TaskTransition, actor: Actor = Depends(actor_dependency)):
         return service.transition_task(actor, record_id, data)
+
+    @app.put('/api/v1/leave/{record_id}/sickness')
+    def amend_sickness(record_id: str, data: LeaveAmend, actor: Actor=Depends(actor_dependency)):
+        return service.amend_sickness(actor,record_id,data)

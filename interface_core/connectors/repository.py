@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 from uuid import uuid4
 from ..database import SQLiteDatabase
 from ..events import ActivityJournal
@@ -47,6 +48,9 @@ class SQLiteConnectorRepository:
             if row['revision']!=connection['revision']:
                 raise DomainError(409,'Another sync already advanced this connection; refresh')
             for record in records:
+                if connection['provider'] == 'ashby_hires':
+                    db.execute('INSERT INTO hiring_inbox(connection_id,external_id,payload) VALUES (?,?,?) ON CONFLICT(connection_id,external_id) DO UPDATE SET payload=excluded.payload,version=hiring_inbox.version+1', (connection['id'],record['external_id'],json.dumps(record)))
+                    continue
                 if connection['provider'] == 'google_workspace':
                     db.execute('INSERT INTO workspace_users VALUES (?,?,?,?,?,?) ON CONFLICT(connection_id,external_id) DO UPDATE SET name=excluded.name,email=excluded.email,suspended=excluded.suspended,synced_at=excluded.synced_at', (connection['id'],record['external_id'],record['name'],record['email'],int(record['suspended']),datetime.now(timezone.utc).isoformat()))
                     continue
